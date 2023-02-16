@@ -7,7 +7,14 @@
 package app
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/oechsler-it/identity/fiber"
+	"github.com/oechsler-it/identity/modules"
+	"github.com/oechsler-it/identity/modules/user"
+	"github.com/oechsler-it/identity/modules/user/app/command/handler"
+	"github.com/oechsler-it/identity/modules/user/infra/hook"
+	"github.com/oechsler-it/identity/modules/user/infra/model"
+	"github.com/oechsler-it/identity/modules/user/infra/service"
 	"github.com/oechsler-it/identity/runtime"
 )
 
@@ -19,15 +26,34 @@ func New() *App {
 	logger := runtime.NewLogger(env)
 	runtimeRuntime := runtime.NewRuntime(hooks, logger)
 	app := fiber.NewFiber()
-	fiberOptions := &fiber.FiberOptions{
+	options := &fiber.Options{
 		Hooks:  hooks,
 		Logger: logger,
 		App:    app,
 	}
-	appOptions := &AppOptions{
+	inMemoryUserModel := model.NewInMemoryUserModel()
+	validate := validator.New()
+	argon2idPasswordService := service.NewArgon2idPasswordService()
+	createHandler := handler.NewCreateHandler(validate, argon2idPasswordService, inMemoryUserModel)
+	hooksCreateRootUser := &hook.HooksCreateRootUser{
+		Hooks:  hooks,
+		Logger: logger,
+		Env:    env,
+		Model:  inMemoryUserModel,
+		Create: createHandler,
+	}
+	userOptions := &user.Options{
+		HookCreate: hooksCreateRootUser,
+	}
+	modulesOptions := &modules.Options{
+		App:  app,
+		User: userOptions,
+	}
+	appOptions := &Options{
 		Runtime: runtimeRuntime,
 		Logger:  logger,
-		Fiber:   fiberOptions,
+		Fiber:   options,
+		Modules: modulesOptions,
 	}
 	appApp := newApp(appOptions)
 	return appApp

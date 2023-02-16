@@ -14,27 +14,27 @@ func NewFiber() *fiber.App {
 	})
 }
 
-type FiberOptions struct {
+type Options struct {
 	Hooks  *runtime.Hooks
 	Logger *logrus.Logger
 	App    *fiber.App
 }
 
-func UseFiber(options *FiberOptions) {
-	options.Hooks.OnStart(func(ctx context.Context) error {
+func UseFiber(opts *Options) {
+	opts.Hooks.OnStart(func(ctx context.Context) error {
 		go func() {
-			err := options.App.Listen(":3000")
+			err := opts.App.Listen(":3000")
 			if err != nil {
-				options.Logger.WithError(err).
+				opts.Logger.WithError(err).
 					Fatal("Fiber failed")
 			}
 		}()
-		options.Logger.WithField("address", "http://localhost:3000").
+		opts.Logger.WithField("address", "http://localhost:3000").
 			Info("Fiber is listening")
 		return nil
 	})
 
-	options.Hooks.OnStop(func(ctx context.Context) error {
-		return options.App.Shutdown()
+	opts.Hooks.OnStop(func(ctx context.Context) error {
+		return opts.App.Shutdown()
 	})
 }

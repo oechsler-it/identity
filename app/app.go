@@ -4,25 +4,30 @@ package app
 
 import (
 	"github.com/oechsler-it/identity/fiber"
+	"github.com/oechsler-it/identity/modules"
 	"github.com/oechsler-it/identity/runtime"
 	"github.com/sirupsen/logrus"
 )
 
-type AppOptions struct {
+type Options struct {
 	Runtime *runtime.Runtime
 	Logger  *logrus.Logger
-	Fiber   *fiber.FiberOptions
+	Fiber   *fiber.Options
+	// ---
+	Modules *modules.Options
 }
 
 type App struct {
-	AppOptions
+	Options
 }
 
-func newApp(opts *AppOptions) *App {
+func newApp(opts *Options) *App {
 	fiber.UseFiber(opts.Fiber)
+	// ---
+	modules.UseModules(opts.Modules)
 
 	return &App{
-		AppOptions: *opts,
+		Options: *opts,
 	}
 }
 
