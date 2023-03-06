@@ -27,5 +27,11 @@ func (h *VerifyActiveHandler) Handle(ctx context.Context, cmd command.VerifyActi
 	if err != nil {
 		return err
 	}
-	return session.MustNotBeExpired()
+	if err := session.MustNotBeExpired(); err != nil {
+		return err
+	}
+	return session.MustBeOwnedBy(domain.Owner{
+		UserId:   session.OwnedBy.UserId,
+		DeviceId: cmd.DeviceId,
+	})
 }

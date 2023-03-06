@@ -7,30 +7,27 @@ import (
 	"github.com/oechsler-it/identity/modules/session/domain"
 	"github.com/oechsler-it/identity/runtime"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
 type RenewMiddleware struct {
-	Env *runtime.Env
+	Logger *logrus.Logger
+	Env    *runtime.Env
 	// ---
 	Renew cqrs.CommandHandler[command.Renew]
 }
 
 func (e *RenewMiddleware) Handle(ctx *fiber.Ctx) error {
-	sessionIdCookie := ctx.Cookies("session_id")
-	if sessionIdCookie == "" {
-		return ctx.Next()
-	}
-
-	sessionId, err := uuid.FromString(sessionIdCookie)
-	if err != nil {
+	sessionId, ok := ctx.Locals("session_id").(domain.SessionId)
+	if !ok {
 		return ctx.Next()
 	}
 
 	lifetimeInSeconds := e.Env.Int("SESSION_LIFETIME_IN_HOURS", 8) * 60 * 60
 
 	if err := e.Renew.Handle(ctx.Context(), command.Renew{
-		Id:                   domain.SessionId(sessionId),
+		Id:                   sessionId,
 		NewLifeTimeInSeconds: lifetimeInSeconds,
 	}); err != nil {
 		return ctx.Next()
@@ -38,10 +35,14 @@ func (e *RenewMiddleware) Handle(ctx *fiber.Ctx) error {
 
 	ctx.Cookie(&fiber.Cookie{
 		Name:    "session_id",
-		Value:   sessionId.String(),
+		Value:   uuid.UUID(sessionId).String(),
 		Path:    "/",
 		Expires: time.Now().Add(time.Duration(lifetimeInSeconds) * time.Second),
 	})
+
+	e.Logger.WithFields(logrus.Fields{
+		"session_id": uuid.UUID(sessionId).String(),
+	}).Info("session renewed")
 
 	return ctx.Next()
 }

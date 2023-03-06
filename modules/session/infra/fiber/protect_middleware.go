@@ -5,7 +5,6 @@ import (
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/session/app/command"
 	"github.com/oechsler-it/identity/modules/session/domain"
-	uuid "github.com/satori/go.uuid"
 )
 
 type ProtectMiddleware struct {
@@ -13,18 +12,19 @@ type ProtectMiddleware struct {
 }
 
 func (e *ProtectMiddleware) Handle(ctx *fiber.Ctx) error {
-	sessionIdCookie := ctx.Cookies("session_id")
-	if sessionIdCookie == "" {
+	sessionId, ok := ctx.Locals("session_id").(domain.SessionId)
+	if !ok {
 		return fiber.ErrUnauthorized
 	}
 
-	sessionId, err := uuid.FromString(sessionIdCookie)
-	if err != nil {
+	deviceId, ok := ctx.Locals("device_id").(domain.DeviceId)
+	if !ok {
 		return fiber.ErrUnauthorized
 	}
 
 	if err := e.VerifyActive.Handle(ctx.Context(), command.VerifyActive{
-		Id: domain.SessionId(sessionId),
+		Id:       sessionId,
+		DeviceId: deviceId,
 	}); err != nil {
 		return fiber.ErrUnauthorized
 	}

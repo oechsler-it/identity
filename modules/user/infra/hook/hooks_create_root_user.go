@@ -56,7 +56,7 @@ func (e *CreateRootUser) onStart(ctx context.Context) error {
 
 	e.Logger.WithField("id", uuid.UUID(id).String()).
 		WithField("password", cmd.Password).
-		Info("Initial user created")
+		Info("Root user created")
 
 	return nil
 }

@@ -53,6 +53,9 @@ func New() *App {
 		App:    fiberApp,
 		Logger: logger,
 	}
+	sessionIdMiddleware := &fiber2.SessionIdMiddleware{
+		App: fiberApp,
+	}
 	inMemorySessionRepo := model2.NewInMemorySessionRepo()
 	initiateHandler := app2.NewInitiateHandler(validate, inMemorySessionRepo)
 	findByIdentifierHandler := app.NewFindByIdentifierHandler(inMemoryUserRepo)
@@ -73,13 +76,15 @@ func New() *App {
 	revokeHandler := app2.NewRevokeHandler(validate, inMemorySessionRepo)
 	logoutHandler := &fiber2.LogoutHandler{
 		App:               fiberApp,
+		Logger:            logger,
 		ProtectMiddleware: protectMiddleware,
 		Revoke:            revokeHandler,
 	}
 	renewHandler := app2.NewRenewHandler(validate, inMemorySessionRepo)
 	renewMiddleware := &fiber2.RenewMiddleware{
-		Env:   env,
-		Renew: renewHandler,
+		Logger: logger,
+		Env:    env,
+		Renew:  renewHandler,
 	}
 	findByIdHandler := app2.NewFindByIdHandler(inMemorySessionRepo)
 	sessionHandler := &fiber2.SessionHandler{
@@ -89,10 +94,11 @@ func New() *App {
 		FindById:          findByIdHandler,
 	}
 	sessionOptions := &session.Options{
-		DeviceIdMiddleware: deviceIdMiddleware,
-		LoginHandler:       loginHandler,
-		LogoutHandler:      logoutHandler,
-		SessionHandler:     sessionHandler,
+		DeviceIdMiddleware:  deviceIdMiddleware,
+		SessionIdMiddleware: sessionIdMiddleware,
+		LoginHandler:        loginHandler,
+		LogoutHandler:       logoutHandler,
+		SessionHandler:      sessionHandler,
 	}
 	modulesOptions := &modules.Options{
 		App:     fiberApp,

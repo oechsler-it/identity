@@ -64,7 +64,7 @@ func (e *LoginHandler) post(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	deviceId, ok := ctx.Locals("device_id").(uuid.UUID)
+	deviceId, ok := ctx.Locals("device_id").(domain.DeviceId)
 	if !ok {
 		return domain.ErrInvalidDeviceId
 	}
@@ -74,7 +74,7 @@ func (e *LoginHandler) post(ctx *fiber.Ctx) error {
 	if err := e.Initiate.Handle(ctx.Context(), command.Initiate{
 		Id:                sessionId,
 		UserId:            domain.UserId(user.Id),
-		DeviceId:          domain.DeviceId(deviceId),
+		DeviceId:          deviceId,
 		LifetimeInSeconds: lifetimeInSeconds,
 		Renewable:         ctx.FormValue("renewable") == "true",
 	}); err != nil {
@@ -87,6 +87,12 @@ func (e *LoginHandler) post(ctx *fiber.Ctx) error {
 		Path:    "/",
 		Expires: time.Now().Add(time.Duration(lifetimeInSeconds) * time.Second),
 	})
+
+	e.Logger.WithFields(logrus.Fields{
+		"session_id": uuid.UUID(sessionId).String(),
+		"user_id":    uuid.UUID(user.Id).String(),
+		"device_id":  uuid.UUID(deviceId).String(),
+	}).Info("session initiated")
 
 	return ctx.SendStatus(fiber.StatusOK)
 }

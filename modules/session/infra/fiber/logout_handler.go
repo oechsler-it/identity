@@ -6,10 +6,13 @@ import (
 	"github.com/oechsler-it/identity/modules/session/app/command"
 	"github.com/oechsler-it/identity/modules/session/domain"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type LogoutHandler struct {
 	*fiber.App
+	// ---
+	Logger *logrus.Logger
 	// ---
 	ProtectMiddleware *ProtectMiddleware
 	// ---
@@ -23,20 +26,19 @@ func UseLogoutHandler(handler *LogoutHandler) {
 }
 
 func (e *LogoutHandler) post(ctx *fiber.Ctx) error {
-	sessionIdCookie := ctx.Cookies("session_id")
+	sessionId := ctx.Locals("session_id").(domain.SessionId)
 
-	sessionId, err := uuid.FromString(sessionIdCookie)
-	if err != nil {
-		return err
-	}
-
-	if err = e.Revoke.Handle(ctx.Context(), command.Revoke{
-		Id: domain.SessionId(sessionId),
+	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
+		Id: sessionId,
 	}); err != nil {
 		return err
 	}
 
 	ctx.ClearCookie("session_id")
+
+	e.Logger.WithFields(logrus.Fields{
+		"session_id": uuid.UUID(sessionId).String(),
+	}).Info("session revoked")
 
 	return ctx.SendStatus(fiber.StatusOK)
 }

@@ -20,6 +20,13 @@ func (s *Session) MustNotBeExpired() error {
 	return nil
 }
 
+func (s *Session) MustBeOwnedBy(owner Owner) error {
+	if s.OwnedBy != owner {
+		return ErrSessionDoesNotBelongToOwner
+	}
+	return nil
+}
+
 func (s *Session) MustBeRenewable() error {
 	if !s.Renewable {
 		return ErrSessionMustBeRenewable
