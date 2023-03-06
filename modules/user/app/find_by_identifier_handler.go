@@ -24,11 +24,7 @@ func NewFindByIdentifierHandler(readModel FindByIdentifierReadModel) *FindByIden
 func (h *FindByIdentifierHandler) Handle(ctx context.Context, query query.FindByIdentifier) (*domain.User, error) {
 	// TODO: Check other valid identifiers like email, username, etc.
 
-	identifierAsUUID, err := uuid.FromString(query.Identifier)
-	if err != nil {
-		return nil, err
-	}
-	userId := domain.UserId(identifierAsUUID)
-
+	identifierAsUuid, _ := uuid.FromString(query.Identifier)
+	userId := domain.UserId(identifierAsUuid)
 	return h.readModel.FindById(ctx, userId)
 }

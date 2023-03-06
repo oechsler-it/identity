@@ -7,24 +7,16 @@ import (
 	"github.com/oechsler-it/identity/modules/session/domain"
 	"github.com/oechsler-it/identity/runtime"
 	uuid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
 	"time"
 )
 
 type RenewMiddleware struct {
-	*fiber.App
-	// ---
-	Logger *logrus.Logger
-	Env    *runtime.Env
+	Env *runtime.Env
 	// ---
 	Renew cqrs.CommandHandler[command.Renew]
 }
 
-func UseRenewMiddleware(middleware *RenewMiddleware) {
-	middleware.Use(middleware.handle)
-}
-
-func (e *RenewMiddleware) handle(ctx *fiber.Ctx) error {
+func (e *RenewMiddleware) Handle(ctx *fiber.Ctx) error {
 	sessionIdCookie := ctx.Cookies("session_id")
 	if sessionIdCookie == "" {
 		return ctx.Next()

@@ -55,6 +55,22 @@ func (m *InMemorySessionRepo) Update(ctx context.Context, id domain.SessionId, h
 	return nil
 }
 
+func (m *InMemorySessionRepo) Delete(ctx context.Context, id domain.SessionId, handler func(session *domain.Session) error) error {
+	session, err := m.FindById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := handler(session); err != nil {
+		return err
+	}
+
+	session.Id = id
+	sessionId := uuid.UUID(id).String()
+	delete(m.sessions, sessionId)
+	return nil
+}
+
 func (m *InMemorySessionRepo) toSessionModel(session *domain.Session) *SessionModel {
 	return &SessionModel{
 		Id:        uuid.UUID(session.Id).String(),

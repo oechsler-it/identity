@@ -29,13 +29,14 @@ type LoginHandler struct {
 	VerifyPassword       cqrs.CommandHandler[userCommand.VerifyPassword]
 }
 
-func UseFiberLoginHandler(handler *LoginHandler) {
-	handler.Post("/login", handler.handle)
+func UseLoginHandler(handler *LoginHandler) {
+	login := handler.Group("/login")
+	login.Post("/", handler.post)
 }
 
-func (e *LoginHandler) handle(ctx *fiber.Ctx) error {
+func (e *LoginHandler) post(ctx *fiber.Ctx) error {
 	if ctx.Get("Content-Type") != "application/x-www-form-urlencoded" {
-		return fiber.NewError(fiber.StatusBadRequest, "invalid content type")
+		return fiber.ErrUnsupportedMediaType
 	}
 
 	user, err := e.FindUserByIdentifier.Handle(ctx.Context(), userQuery.FindByIdentifier{

@@ -54,13 +54,6 @@ func New() *App {
 		Logger: logger,
 	}
 	inMemorySessionRepo := model2.NewInMemorySessionRepo()
-	renewHandler := app2.NewRenewHandler(validate, inMemorySessionRepo)
-	renewMiddleware := &fiber2.RenewMiddleware{
-		App:    fiberApp,
-		Logger: logger,
-		Env:    env,
-		Renew:  renewHandler,
-	}
 	initiateHandler := app2.NewInitiateHandler(validate, inMemorySessionRepo)
 	findByIdentifierHandler := app.NewFindByIdentifierHandler(inMemoryUserRepo)
 	verifyPasswordHandler := app.NewVerifyPasswordHandler(argon2idPasswordService, inMemoryUserRepo)
@@ -73,10 +66,33 @@ func New() *App {
 		FindUserByIdentifier: findByIdentifierHandler,
 		VerifyPassword:       verifyPasswordHandler,
 	}
+	verifyActiveHandler := app2.NewVerifyActiveHandler(inMemorySessionRepo)
+	protectMiddleware := &fiber2.ProtectMiddleware{
+		VerifyActive: verifyActiveHandler,
+	}
+	revokeHandler := app2.NewRevokeHandler(validate, inMemorySessionRepo)
+	logoutHandler := &fiber2.LogoutHandler{
+		App:               fiberApp,
+		ProtectMiddleware: protectMiddleware,
+		Revoke:            revokeHandler,
+	}
+	renewHandler := app2.NewRenewHandler(validate, inMemorySessionRepo)
+	renewMiddleware := &fiber2.RenewMiddleware{
+		Env:   env,
+		Renew: renewHandler,
+	}
+	findByIdHandler := app2.NewFindByIdHandler(inMemorySessionRepo)
+	sessionHandler := &fiber2.SessionHandler{
+		App:               fiberApp,
+		RenewMiddleware:   renewMiddleware,
+		ProtectMiddleware: protectMiddleware,
+		FindById:          findByIdHandler,
+	}
 	sessionOptions := &session.Options{
 		DeviceIdMiddleware: deviceIdMiddleware,
-		RenewMiddleware:    renewMiddleware,
-		FiberLoginHandler:  loginHandler,
+		LoginHandler:       loginHandler,
+		LogoutHandler:      logoutHandler,
+		SessionHandler:     sessionHandler,
 	}
 	modulesOptions := &modules.Options{
 		App:     fiberApp,
