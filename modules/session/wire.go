@@ -10,10 +10,14 @@ import (
 import commandHandler "github.com/oechsler-it/identity/modules/session/app"
 
 type Options struct {
-	FiberLoginHandler *fiber.FiberLoginHandler
+	DeviceIdMiddleware *fiber.DeviceIdMiddleware
+	RenewMiddleware    *fiber.RenewMiddleware
+	FiberLoginHandler  *fiber.LoginHandler
 }
 
 func UseSession(opts *Options) {
+	fiber.UseDeviceIdMiddleware(opts.DeviceIdMiddleware)
+	fiber.UseRenewMiddleware(opts.RenewMiddleware)
 	fiber.UseFiberLoginHandler(opts.FiberLoginHandler)
 }
 
@@ -23,8 +27,14 @@ var WireSession = wire.NewSet(
 	commandHandler.NewInitiateHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.Initiate]), new(*commandHandler.InitiateHandler)),
 
-	wire.Struct(new(fiber.FiberLoginHandler), "*"),
+	commandHandler.NewRenewHandler,
+	wire.Bind(new(cqrs.CommandHandler[command.Renew]), new(*commandHandler.RenewHandler)),
+
+	wire.Struct(new(fiber.DeviceIdMiddleware), "*"),
+	wire.Struct(new(fiber.RenewMiddleware), "*"),
+	wire.Struct(new(fiber.LoginHandler), "*"),
 
 	model.NewInMemorySessionRepo,
 	wire.Bind(new(commandHandler.InitiateWriteModel), new(*model.InMemorySessionRepo)),
+	wire.Bind(new(commandHandler.RenewWriteModel), new(*model.InMemorySessionRepo)),
 )

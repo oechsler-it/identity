@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type HooksCreateRootUser struct {
+type CreateRootUser struct {
 	*runtime.Hooks
 	// ---
 	Logger *logrus.Logger
@@ -21,11 +21,11 @@ type HooksCreateRootUser struct {
 	Create cqrs.CommandHandler[command.Create]
 }
 
-func UseHooksCreateRootUser(hook *HooksCreateRootUser) {
+func UseCreateRootUser(hook *CreateRootUser) {
 	hook.OnStart(hook.onStart)
 }
 
-func (e *HooksCreateRootUser) onStart(ctx context.Context) error {
+func (e *CreateRootUser) onStart(ctx context.Context) error {
 	cmd := command.Create{
 		Profile: domain.Profile{
 			FirstName: e.Env.String(

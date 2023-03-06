@@ -14,11 +14,11 @@ import (
 )
 
 type Options struct {
-	HooksCreateRootUser *hook.HooksCreateRootUser
+	CreateRootUser *hook.CreateRootUser
 }
 
 func UseUser(opts *Options) {
-	hook.UseHooksCreateRootUser(opts.HooksCreateRootUser)
+	hook.UseCreateRootUser(opts.CreateRootUser)
 }
 
 var WireUser = wire.NewSet(
@@ -33,7 +33,7 @@ var WireUser = wire.NewSet(
 	queryHandler.NewFindByIdentifierHandler,
 	wire.Bind(new(cqrs.QueryHandler[query.FindByIdentifier, *domain.User]), new(*queryHandler.FindByIdentifierHandler)),
 
-	wire.Struct(new(hook.HooksCreateRootUser), "*"),
+	wire.Struct(new(hook.CreateRootUser), "*"),
 
 	model.NewInMemoryUserRepo,
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.InMemoryUserRepo)),

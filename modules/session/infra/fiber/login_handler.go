@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type FiberLoginHandler struct {
+type LoginHandler struct {
 	*fiber.App
 	// ---
 	Logger *logrus.Logger
@@ -29,11 +29,11 @@ type FiberLoginHandler struct {
 	VerifyPassword       cqrs.CommandHandler[userCommand.VerifyPassword]
 }
 
-func UseFiberLoginHandler(handler *FiberLoginHandler) {
+func UseFiberLoginHandler(handler *LoginHandler) {
 	handler.Post("/login", handler.handle)
 }
 
-func (e *FiberLoginHandler) handle(ctx *fiber.Ctx) error {
+func (e *LoginHandler) handle(ctx *fiber.Ctx) error {
 	if ctx.Get("Content-Type") != "application/x-www-form-urlencoded" {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid content type")
 	}
@@ -63,19 +63,18 @@ func (e *FiberLoginHandler) handle(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	deviceId := ctx.Cookies("device_id")
-	deviceIdAsUuid, err := uuid.FromString(deviceId)
-	if err != nil {
-		deviceIdAsUuid = uuid.UUID{}
+	deviceId, ok := ctx.Locals("device_id").(uuid.UUID)
+	if !ok {
+		return domain.ErrInvalidDeviceId
 	}
 
-	lifeTimeInSeconds := e.Env.Int("SESSION_LIFETIME_IN_HOURS", 8) * 60 * 60
+	lifetimeInSeconds := e.Env.Int("SESSION_LIFETIME_IN_HOURS", 8) * 60 * 60
 
 	if err := e.Initiate.Handle(ctx.Context(), command.Initiate{
 		Id:                sessionId,
 		UserId:            domain.UserId(user.Id),
-		DeviceId:          domain.DeviceId(deviceIdAsUuid),
-		LifetimeInSeconds: lifeTimeInSeconds,
+		DeviceId:          domain.DeviceId(deviceId),
+		LifetimeInSeconds: lifetimeInSeconds,
 		Renewable:         ctx.FormValue("renewable") == "true",
 	}); err != nil {
 		return err
@@ -85,7 +84,7 @@ func (e *FiberLoginHandler) handle(ctx *fiber.Ctx) error {
 		Name:    "session_id",
 		Value:   uuid.UUID(sessionId).String(),
 		Path:    "/",
-		Expires: time.Now().Add(time.Duration(lifeTimeInSeconds) * time.Second),
+		Expires: time.Now().Add(time.Duration(lifetimeInSeconds) * time.Second),
 	})
 
 	return ctx.SendStatus(fiber.StatusOK)

@@ -21,12 +21,36 @@ func (m *InMemorySessionRepo) NextId(_ context.Context) (domain.SessionId, error
 	return domain.SessionId(uuid.NewV4()), nil
 }
 
-func (m *InMemorySessionRepo) Create(_ context.Context, session *domain.Session) error {
-	sessionId := uuid.UUID(session.Id).String()
-	if _, ok := m.sessions[sessionId]; ok {
-		return nil
+func (m *InMemorySessionRepo) FindById(_ context.Context, id domain.SessionId) (*domain.Session, error) {
+	sessionId := uuid.UUID(id).String()
+	if sessionModel, ok := m.sessions[sessionId]; ok {
+		return m.toSession(sessionModel)
+	}
+	return nil, domain.ErrSessionNotFound
+}
+
+func (m *InMemorySessionRepo) Create(ctx context.Context, session *domain.Session) error {
+	if _, err := m.FindById(ctx, session.Id); err == nil {
+		return domain.ErrSessionAlreadyExists
 	}
 
+	sessionId := uuid.UUID(session.Id).String()
+	m.sessions[sessionId] = m.toSessionModel(session)
+	return nil
+}
+
+func (m *InMemorySessionRepo) Update(ctx context.Context, id domain.SessionId, handler func(session *domain.Session) error) error {
+	session, err := m.FindById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := handler(session); err != nil {
+		return err
+	}
+
+	session.Id = id
+	sessionId := uuid.UUID(id).String()
 	m.sessions[sessionId] = m.toSessionModel(session)
 	return nil
 }

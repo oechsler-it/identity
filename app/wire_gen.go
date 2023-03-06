@@ -39,7 +39,7 @@ func New() *App {
 	validate := validator.New()
 	argon2idPasswordService := service.NewArgon2idPasswordService()
 	createHandler := app.NewCreateHandler(validate, argon2idPasswordService, inMemoryUserRepo)
-	hooksCreateRootUser := &hook.HooksCreateRootUser{
+	createRootUser := &hook.CreateRootUser{
 		Hooks:  hooks,
 		Logger: logger,
 		Env:    env,
@@ -47,13 +47,24 @@ func New() *App {
 		Create: createHandler,
 	}
 	userOptions := &user.Options{
-		HooksCreateRootUser: hooksCreateRootUser,
+		CreateRootUser: createRootUser,
+	}
+	deviceIdMiddleware := &fiber2.DeviceIdMiddleware{
+		App:    fiberApp,
+		Logger: logger,
 	}
 	inMemorySessionRepo := model2.NewInMemorySessionRepo()
+	renewHandler := app2.NewRenewHandler(validate, inMemorySessionRepo)
+	renewMiddleware := &fiber2.RenewMiddleware{
+		App:    fiberApp,
+		Logger: logger,
+		Env:    env,
+		Renew:  renewHandler,
+	}
 	initiateHandler := app2.NewInitiateHandler(validate, inMemorySessionRepo)
 	findByIdentifierHandler := app.NewFindByIdentifierHandler(inMemoryUserRepo)
 	verifyPasswordHandler := app.NewVerifyPasswordHandler(argon2idPasswordService, inMemoryUserRepo)
-	fiberLoginHandler := &fiber2.FiberLoginHandler{
+	loginHandler := &fiber2.LoginHandler{
 		App:                  fiberApp,
 		Logger:               logger,
 		Env:                  env,
@@ -63,7 +74,9 @@ func New() *App {
 		VerifyPassword:       verifyPasswordHandler,
 	}
 	sessionOptions := &session.Options{
-		FiberLoginHandler: fiberLoginHandler,
+		DeviceIdMiddleware: deviceIdMiddleware,
+		RenewMiddleware:    renewMiddleware,
+		FiberLoginHandler:  loginHandler,
 	}
 	modulesOptions := &modules.Options{
 		App:     fiberApp,

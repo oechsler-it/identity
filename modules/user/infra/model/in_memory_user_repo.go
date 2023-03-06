@@ -35,10 +35,6 @@ func (m *InMemoryUserRepo) Create(ctx context.Context, user *domain.User) error 
 	}
 
 	userId := uuid.UUID(user.Id).String()
-	if _, ok := m.users[userId]; ok {
-		return nil
-	}
-
 	m.users[userId] = m.toUserModel(user)
 	return nil
 }
