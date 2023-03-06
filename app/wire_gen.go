@@ -10,8 +10,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/oechsler-it/identity/fiber"
 	"github.com/oechsler-it/identity/modules"
+	"github.com/oechsler-it/identity/modules/session"
+	app2 "github.com/oechsler-it/identity/modules/session/app"
+	fiber2 "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	model2 "github.com/oechsler-it/identity/modules/session/infra/model"
 	"github.com/oechsler-it/identity/modules/user"
-	"github.com/oechsler-it/identity/modules/user/app/command/handler"
+	"github.com/oechsler-it/identity/modules/user/app"
 	"github.com/oechsler-it/identity/modules/user/infra/hook"
 	"github.com/oechsler-it/identity/modules/user/infra/model"
 	"github.com/oechsler-it/identity/modules/user/infra/service"
@@ -25,29 +29,46 @@ func New() *App {
 	env := runtime.NewEnv()
 	logger := runtime.NewLogger(env)
 	runtimeRuntime := runtime.NewRuntime(hooks, logger)
-	app := fiber.NewFiber()
+	fiberApp := fiber.NewFiber()
 	options := &fiber.Options{
 		Hooks:  hooks,
 		Logger: logger,
-		App:    app,
+		App:    fiberApp,
 	}
-	inMemoryUserModel := model.NewInMemoryUserModel()
+	inMemoryUserRepo := model.NewInMemoryUserRepo()
 	validate := validator.New()
 	argon2idPasswordService := service.NewArgon2idPasswordService()
-	createHandler := handler.NewCreateHandler(validate, argon2idPasswordService, inMemoryUserModel)
+	createHandler := app.NewCreateHandler(validate, argon2idPasswordService, inMemoryUserRepo)
 	hooksCreateRootUser := &hook.HooksCreateRootUser{
 		Hooks:  hooks,
 		Logger: logger,
 		Env:    env,
-		Model:  inMemoryUserModel,
+		Model:  inMemoryUserRepo,
 		Create: createHandler,
 	}
 	userOptions := &user.Options{
-		HookCreate: hooksCreateRootUser,
+		HooksCreateRootUser: hooksCreateRootUser,
+	}
+	inMemorySessionRepo := model2.NewInMemorySessionRepo()
+	initiateHandler := app2.NewInitiateHandler(validate, inMemorySessionRepo)
+	findByIdentifierHandler := app.NewFindByIdentifierHandler(inMemoryUserRepo)
+	verifyPasswordHandler := app.NewVerifyPasswordHandler(argon2idPasswordService, inMemoryUserRepo)
+	fiberLoginHandler := &fiber2.FiberLoginHandler{
+		App:                  fiberApp,
+		Logger:               logger,
+		Env:                  env,
+		Model:                inMemorySessionRepo,
+		Initiate:             initiateHandler,
+		FindUserByIdentifier: findByIdentifierHandler,
+		VerifyPassword:       verifyPasswordHandler,
+	}
+	sessionOptions := &session.Options{
+		FiberLoginHandler: fiberLoginHandler,
 	}
 	modulesOptions := &modules.Options{
-		App:  app,
-		User: userOptions,
+		App:     fiberApp,
+		User:    userOptions,
+		Session: sessionOptions,
 	}
 	appOptions := &Options{
 		Runtime: runtimeRuntime,

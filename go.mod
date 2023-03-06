@@ -1,6 +1,6 @@
 module github.com/oechsler-it/identity
 
-go 1.19
+go 1.20
 
 require (
 	github.com/alexedwards/argon2id v0.0.0-20211130144151-3585854a6387
@@ -12,12 +12,10 @@ require (
 	github.com/samber/lo v1.37.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.1
 )
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/google/subcommands v1.0.1 // indirect
@@ -33,7 +31,7 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/savsgio/dictpool v0.0.0-20221023140959-7bf2e61cea94 // indirect
 	github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/tinylib/msgp v1.1.6 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.44.0 // indirect
@@ -44,5 +42,4 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

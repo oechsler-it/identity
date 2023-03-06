@@ -1,4 +1,4 @@
-package handler
+package app
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 )
 
 type CreatePasswordService interface {
-	Hash(password string) (domain.HashedPassword, error)
+	Hash(password domain.PlainPassword) (domain.HashedPassword, error)
 }
 
 type CreateWriteModel interface {
@@ -16,35 +16,32 @@ type CreateWriteModel interface {
 }
 
 type CreateHandler struct {
-	validate   *validator.Validate
-	password   CreatePasswordService
-	writeModel CreateWriteModel
+	validate        *validator.Validate
+	passwordService CreatePasswordService
+	writeModel      CreateWriteModel
 }
 
 func NewCreateHandler(
 	validate *validator.Validate,
-	password CreatePasswordService,
+	passwordService CreatePasswordService,
 	writeModel CreateWriteModel,
 ) *CreateHandler {
 	return &CreateHandler{
-		validate:   validate,
-		password:   password,
-		writeModel: writeModel,
+		validate:        validate,
+		passwordService: passwordService,
+		writeModel:      writeModel,
 	}
 }
 
 func (h *CreateHandler) Handle(ctx context.Context, cmd command.Create) error {
-	hashedPassword, err := h.password.Hash(cmd.Password)
+	hashedPassword, err := h.passwordService.Hash(cmd.Password)
 	if err != nil {
 		return err
 	}
 
 	user := domain.CreateUser(
 		cmd.Id,
-		domain.Profile{
-			FirstName: cmd.Profile.FirstName,
-			LastName:  cmd.Profile.LastName,
-		},
+		cmd.Profile,
 		hashedPassword,
 	)
 

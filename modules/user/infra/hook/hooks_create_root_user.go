@@ -4,8 +4,10 @@ import (
 	"context"
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/user/app/command"
+	"github.com/oechsler-it/identity/modules/user/domain"
 	"github.com/oechsler-it/identity/modules/user/infra/model"
 	"github.com/oechsler-it/identity/runtime"
+	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,7 +17,7 @@ type HooksCreateRootUser struct {
 	Logger *logrus.Logger
 	Env    *runtime.Env
 	// ---
-	Model  *model.InMemoryUserModel
+	Model  *model.InMemoryUserRepo
 	Create cqrs.CommandHandler[command.Create]
 }
 
@@ -25,7 +27,7 @@ func UseHooksCreateRootUser(hook *HooksCreateRootUser) {
 
 func (e *HooksCreateRootUser) onStart(ctx context.Context) error {
 	cmd := command.Create{
-		Profile: command.CreateProfile{
+		Profile: domain.Profile{
 			FirstName: e.Env.String(
 				"INITIAL_USER_FIRST_NAME",
 				"Initial",
@@ -35,10 +37,10 @@ func (e *HooksCreateRootUser) onStart(ctx context.Context) error {
 				"User",
 			),
 		},
-		Password: e.Env.String(
+		Password: domain.PlainPassword(e.Env.String(
 			"INITIAL_USER_PASSWORD",
 			"change-me",
-		),
+		)),
 	}
 
 	id, err := e.Model.NextId(ctx)
@@ -52,7 +54,7 @@ func (e *HooksCreateRootUser) onStart(ctx context.Context) error {
 		return err
 	}
 
-	e.Logger.WithField("id", id).
+	e.Logger.WithField("id", uuid.UUID(id).String()).
 		WithField("password", cmd.Password).
 		Info("Initial user created")
 
