@@ -1,0 +1,49 @@
+basePath: /
+info:
+  contact: {}
+  description: A minimal identity provider
+  title: identity
+  version: 0.0.1
+paths:
+  /login:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      parameters:
+      - description: User identifier
+        in: formData
+        name: identifier
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Renewable
+        in: formData
+        name: renewable
+        type: boolean
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+      summary: Initiate a new session with local credentials
+      tags:
+      - Session
+  /logout:
+    post:
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      summary: Revoke the current session
+      tags:
+      - Session
+swagger: "2.0"

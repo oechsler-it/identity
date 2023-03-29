@@ -8,6 +8,7 @@ import (
 	"github.com/oechsler-it/identity/fiber"
 	"github.com/oechsler-it/identity/modules"
 	"github.com/oechsler-it/identity/runtime"
+	"github.com/oechsler-it/identity/swagger"
 	"github.com/oechsler-it/identity/validator"
 )
 
@@ -16,6 +17,7 @@ func New() *App {
 		modules.WireModules,
 		// ---
 		fiber.WireFiber,
+		swagger.WireSwagger,
 		validator.WireValidator,
 		// ---
 		runtime.WireRuntime,

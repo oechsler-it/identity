@@ -34,6 +34,16 @@ func UseLoginHandler(handler *LoginHandler) {
 	login.Post("/", handler.post)
 }
 
+//	@Summary	Initiate a new session with local credentials
+//	@Accept		x-www-form-urlencoded
+//	@Produce	text/plain
+//	@Param		identifier	formData	string	true	"User identifier"
+//	@Param		password	formData	string	true	"Password"
+//	@Param		renewable	formData	bool	false	"Renewable"
+//	@Success	200
+//	@Failure	400
+//	@Router		/login [post]
+//	@Tags		Session
 func (e *LoginHandler) post(ctx *fiber.Ctx) error {
 	if ctx.Get("Content-Type") != "application/x-www-form-urlencoded" {
 		return fiber.ErrUnsupportedMediaType

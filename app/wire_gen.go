@@ -20,6 +20,7 @@ import (
 	"github.com/oechsler-it/identity/modules/user/infra/model"
 	"github.com/oechsler-it/identity/modules/user/infra/service"
 	"github.com/oechsler-it/identity/runtime"
+	"github.com/oechsler-it/identity/swagger"
 )
 
 // Injectors from wire.go:
@@ -34,6 +35,9 @@ func New() *App {
 		Hooks:  hooks,
 		Logger: logger,
 		App:    fiberApp,
+	}
+	swaggerOptions := &swagger.Options{
+		App: fiberApp,
 	}
 	inMemoryUserRepo := model.NewInMemoryUserRepo()
 	validate := validator.New()
@@ -109,6 +113,7 @@ func New() *App {
 		Runtime: runtimeRuntime,
 		Logger:  logger,
 		Fiber:   options,
+		Swagger: swaggerOptions,
 		Modules: modulesOptions,
 	}
 	appApp := newApp(appOptions)

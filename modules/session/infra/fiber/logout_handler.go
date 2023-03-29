@@ -25,6 +25,12 @@ func UseLogoutHandler(handler *LogoutHandler) {
 	logout.Post("/", handler.post)
 }
 
+//	@Summary	Revoke the current session
+//	@Produce	text/plain
+//	@Success	200
+//	@Failure	401
+//	@Router		/logout [post]
+//	@Tags		Session
 func (e *LogoutHandler) post(ctx *fiber.Ctx) error {
 	sessionId := ctx.Locals("session_id").(domain.SessionId)
 

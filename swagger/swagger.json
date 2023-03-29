@@ -1,0 +1,75 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "A minimal identity provider",
+        "title": "identity",
+        "contact": {},
+        "version": "0.0.1"
+    },
+    "basePath": "/",
+    "paths": {
+        "/login": {
+            "post": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Session"
+                ],
+                "summary": "Initiate a new session with local credentials",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User identifier",
+                        "name": "identifier",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Renewable",
+                        "name": "renewable",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Session"
+                ],
+                "summary": "Revoke the current session",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        }
+    }
+}
