@@ -1,7 +1,6 @@
 package model
 
 import (
-	"context"
 	"errors"
 	"github.com/oechsler-it/identity/modules/user/domain"
 	"github.com/oechsler-it/identity/runtime"
@@ -9,6 +8,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"reflect"
+)
+
+import (
+	"context"
 )
 
 type GormUserRepo struct {

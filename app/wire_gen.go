@@ -69,37 +69,37 @@ func New() *App {
 	sessionIdMiddleware := &fiber2.SessionIdMiddleware{
 		App: fiberApp,
 	}
-	inMemorySessionRepo := model2.NewInMemorySessionRepo()
-	initiateHandler := app2.NewInitiateHandler(validate, inMemorySessionRepo)
+	gormSessionRepo := model2.NewGormSessionRepo(db, logger, hooks)
+	initiateHandler := app2.NewInitiateHandler(validate, gormSessionRepo)
 	findByIdentifierHandler := app.NewFindByIdentifierHandler(gormUserRepo)
 	verifyPasswordHandler := app.NewVerifyPasswordHandler(argon2idPasswordService, gormUserRepo)
 	loginHandler := &fiber2.LoginHandler{
 		App:                  fiberApp,
 		Logger:               logger,
 		Env:                  env,
-		Model:                inMemorySessionRepo,
+		Model:                gormSessionRepo,
 		Initiate:             initiateHandler,
 		FindUserByIdentifier: findByIdentifierHandler,
 		VerifyPassword:       verifyPasswordHandler,
 	}
-	verifyActiveHandler := app2.NewVerifyActiveHandler(inMemorySessionRepo)
+	verifyActiveHandler := app2.NewVerifyActiveHandler(gormSessionRepo)
 	protectMiddleware := &fiber2.ProtectMiddleware{
 		VerifyActive: verifyActiveHandler,
 	}
-	revokeHandler := app2.NewRevokeHandler(validate, inMemorySessionRepo)
+	revokeHandler := app2.NewRevokeHandler(validate, gormSessionRepo)
 	logoutHandler := &fiber2.LogoutHandler{
 		App:               fiberApp,
 		Logger:            logger,
 		ProtectMiddleware: protectMiddleware,
 		Revoke:            revokeHandler,
 	}
-	renewHandler := app2.NewRenewHandler(validate, inMemorySessionRepo)
+	renewHandler := app2.NewRenewHandler(validate, gormSessionRepo)
 	renewMiddleware := &fiber2.RenewMiddleware{
 		Logger: logger,
 		Env:    env,
 		Renew:  renewHandler,
 	}
-	findByIdHandler := app2.NewFindByIdHandler(inMemorySessionRepo)
+	findByIdHandler := app2.NewFindByIdHandler(gormSessionRepo)
 	sessionHandler := &fiber2.SessionHandler{
 		App:               fiberApp,
 		RenewMiddleware:   renewMiddleware,

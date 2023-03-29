@@ -54,10 +54,10 @@ var WireSession = wire.NewSet(
 	wire.Struct(new(fiber.LogoutHandler), "*"),
 	wire.Struct(new(fiber.SessionHandler), "*"),
 
-	model.NewInMemorySessionRepo,
-	wire.Bind(new(commandHandler.InitiateWriteModel), new(*model.InMemorySessionRepo)),
-	wire.Bind(new(commandHandler.RenewWriteModel), new(*model.InMemorySessionRepo)),
-	wire.Bind(new(commandHandler.RevokeWriteModel), new(*model.InMemorySessionRepo)),
-	wire.Bind(new(commandHandler.VerifyActiveReadModel), new(*model.InMemorySessionRepo)),
-	wire.Bind(new(queryHandler.FindByIdReadModel), new(*model.InMemorySessionRepo)),
+	model.NewGormSessionRepo,
+	wire.Bind(new(commandHandler.InitiateWriteModel), new(*model.GormSessionRepo)),
+	wire.Bind(new(commandHandler.RenewWriteModel), new(*model.GormSessionRepo)),
+	wire.Bind(new(commandHandler.RevokeWriteModel), new(*model.GormSessionRepo)),
+	wire.Bind(new(commandHandler.VerifyActiveReadModel), new(*model.GormSessionRepo)),
+	wire.Bind(new(queryHandler.FindByIdReadModel), new(*model.GormSessionRepo)),
 )

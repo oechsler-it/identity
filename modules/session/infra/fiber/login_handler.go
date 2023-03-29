@@ -22,7 +22,7 @@ type LoginHandler struct {
 	Logger *logrus.Logger
 	Env    *runtime.Env
 	// ---
-	Model    *model.InMemorySessionRepo
+	Model    *model.GormSessionRepo
 	Initiate cqrs.CommandHandler[command.Initiate]
 	// ---
 	FindUserByIdentifier cqrs.QueryHandler[userQuery.FindByIdentifier, *userDomain.User]
