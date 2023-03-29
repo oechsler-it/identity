@@ -6,6 +6,7 @@ package app
 import (
 	"github.com/google/wire"
 	"github.com/oechsler-it/identity/fiber"
+	"github.com/oechsler-it/identity/gorm"
 	"github.com/oechsler-it/identity/modules"
 	"github.com/oechsler-it/identity/runtime"
 	"github.com/oechsler-it/identity/swagger"
@@ -16,6 +17,7 @@ func New() *App {
 	wire.Build(
 		modules.WireModules,
 		// ---
+		gorm.WireGorm,
 		fiber.WireFiber,
 		swagger.WireSwagger,
 		validator.WireValidator,

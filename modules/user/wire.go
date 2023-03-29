@@ -30,15 +30,19 @@ var WireUser = wire.NewSet(
 	commandHandler.NewVerifyPasswordHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.VerifyPassword]), new(*commandHandler.VerifyPasswordHandler)),
 
+	commandHandler.NewVerifyNoUserExistsHandler,
+	wire.Bind(new(cqrs.CommandHandler[command.VerifyNoUserExists]), new(*commandHandler.VerifyNoUserExistsHandler)),
+
 	queryHandler.NewFindByIdentifierHandler,
 	wire.Bind(new(cqrs.QueryHandler[query.FindByIdentifier, *domain.User]), new(*queryHandler.FindByIdentifierHandler)),
 
 	wire.Struct(new(hook.CreateRootUser), "*"),
 
-	model.NewInMemoryUserRepo,
-	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.InMemoryUserRepo)),
-	wire.Bind(new(commandHandler.VerifyPasswordReadModel), new(*model.InMemoryUserRepo)),
-	wire.Bind(new(queryHandler.FindByIdentifierReadModel), new(*model.InMemoryUserRepo)),
+	model.NewGormUserRepo,
+	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormUserRepo)),
+	wire.Bind(new(commandHandler.VerifyPasswordReadModel), new(*model.GormUserRepo)),
+	wire.Bind(new(commandHandler.VerifyNoUserExistsRedModel), new(*model.GormUserRepo)),
+	wire.Bind(new(queryHandler.FindByIdentifierReadModel), new(*model.GormUserRepo)),
 
 	service.NewArgon2idPasswordService,
 	wire.Bind(new(commandHandler.CreatePasswordService), new(*service.Argon2idPasswordService)),

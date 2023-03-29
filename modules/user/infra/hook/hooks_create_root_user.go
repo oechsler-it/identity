@@ -17,8 +17,9 @@ type CreateRootUser struct {
 	Logger *logrus.Logger
 	Env    *runtime.Env
 	// ---
-	Model  *model.InMemoryUserRepo
-	Create cqrs.CommandHandler[command.Create]
+	Repo               *model.GormUserRepo
+	VerifyNoUserExists cqrs.CommandHandler[command.VerifyNoUserExists]
+	Create             cqrs.CommandHandler[command.Create]
 }
 
 func UseCreateRootUser(hook *CreateRootUser) {
@@ -26,6 +27,10 @@ func UseCreateRootUser(hook *CreateRootUser) {
 }
 
 func (e *CreateRootUser) onStart(ctx context.Context) error {
+	if err := e.VerifyNoUserExists.Handle(ctx, command.VerifyNoUserExists{}); err != nil {
+		return nil
+	}
+
 	cmd := command.Create{
 		Profile: domain.Profile{
 			FirstName: e.Env.String(
@@ -43,7 +48,7 @@ func (e *CreateRootUser) onStart(ctx context.Context) error {
 		)),
 	}
 
-	id, err := e.Model.NextId(ctx)
+	id, err := e.Repo.NextId(ctx)
 	if err == nil {
 		cmd.Id = id
 	} else {

@@ -9,6 +9,7 @@ package app
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/oechsler-it/identity/fiber"
+	"github.com/oechsler-it/identity/gorm"
 	"github.com/oechsler-it/identity/modules"
 	"github.com/oechsler-it/identity/modules/session"
 	app2 "github.com/oechsler-it/identity/modules/session/app"
@@ -39,16 +40,24 @@ func New() *App {
 	swaggerOptions := &swagger.Options{
 		App: fiberApp,
 	}
-	inMemoryUserRepo := model.NewInMemoryUserRepo()
+	gormOptions := &gorm.Options{
+		Hooks:  hooks,
+		Env:    env,
+		Logger: logger,
+	}
+	db := gorm.NewPostgres(gormOptions)
+	gormUserRepo := model.NewGormUserRepo(db, logger, hooks)
+	verifyNoUserExistsHandler := app.NewVerifyNoUserExistsHandler(gormUserRepo)
 	validate := validator.New()
 	argon2idPasswordService := service.NewArgon2idPasswordService()
-	createHandler := app.NewCreateHandler(validate, argon2idPasswordService, inMemoryUserRepo)
+	createHandler := app.NewCreateHandler(validate, argon2idPasswordService, gormUserRepo)
 	createRootUser := &hook.CreateRootUser{
-		Hooks:  hooks,
-		Logger: logger,
-		Env:    env,
-		Model:  inMemoryUserRepo,
-		Create: createHandler,
+		Hooks:              hooks,
+		Logger:             logger,
+		Env:                env,
+		Repo:               gormUserRepo,
+		VerifyNoUserExists: verifyNoUserExistsHandler,
+		Create:             createHandler,
 	}
 	userOptions := &user.Options{
 		CreateRootUser: createRootUser,
@@ -62,8 +71,8 @@ func New() *App {
 	}
 	inMemorySessionRepo := model2.NewInMemorySessionRepo()
 	initiateHandler := app2.NewInitiateHandler(validate, inMemorySessionRepo)
-	findByIdentifierHandler := app.NewFindByIdentifierHandler(inMemoryUserRepo)
-	verifyPasswordHandler := app.NewVerifyPasswordHandler(argon2idPasswordService, inMemoryUserRepo)
+	findByIdentifierHandler := app.NewFindByIdentifierHandler(gormUserRepo)
+	verifyPasswordHandler := app.NewVerifyPasswordHandler(argon2idPasswordService, gormUserRepo)
 	loginHandler := &fiber2.LoginHandler{
 		App:                  fiberApp,
 		Logger:               logger,
