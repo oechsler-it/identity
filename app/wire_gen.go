@@ -100,18 +100,34 @@ func New() *App {
 		Renew:  renewHandler,
 	}
 	findByIdHandler := app2.NewFindByIdHandler(gormSessionRepo)
-	sessionHandler := &fiber2.SessionHandler{
+	findByOwnerUserIdHandler := app2.NewFindByOwnerUserIdHandler(gormSessionRepo)
+	activeSessionsHandler := &fiber2.ActiveSessionsHandler{
+		App:               fiberApp,
+		RenewMiddleware:   renewMiddleware,
+		ProtectMiddleware: protectMiddleware,
+		FindById:          findByIdHandler,
+		FindByOwnerUserId: findByOwnerUserIdHandler,
+	}
+	activeSessionHandler := &fiber2.ActiveSessionHandler{
+		App:               fiberApp,
+		RenewMiddleware:   renewMiddleware,
+		ProtectMiddleware: protectMiddleware,
+		FindById:          findByIdHandler,
+	}
+	sessionByIdHandler := &fiber2.SessionByIdHandler{
 		App:               fiberApp,
 		RenewMiddleware:   renewMiddleware,
 		ProtectMiddleware: protectMiddleware,
 		FindById:          findByIdHandler,
 	}
 	sessionOptions := &session.Options{
-		DeviceIdMiddleware:  deviceIdMiddleware,
-		SessionIdMiddleware: sessionIdMiddleware,
-		LoginHandler:        loginHandler,
-		LogoutHandler:       logoutHandler,
-		SessionHandler:      sessionHandler,
+		DeviceIdMiddleware:    deviceIdMiddleware,
+		SessionIdMiddleware:   sessionIdMiddleware,
+		LoginHandler:          loginHandler,
+		LogoutHandler:         logoutHandler,
+		ActiveSessionsHandler: activeSessionsHandler,
+		ActiveSessionHandler:  activeSessionHandler,
+		SessionByIdHandler:    sessionByIdHandler,
 	}
 	modulesOptions := &modules.Options{
 		App:     fiberApp,

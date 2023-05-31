@@ -13,11 +13,13 @@ import (
 )
 
 type Options struct {
-	DeviceIdMiddleware  *fiber.DeviceIdMiddleware
-	SessionIdMiddleware *fiber.SessionIdMiddleware
-	LoginHandler        *fiber.LoginHandler
-	LogoutHandler       *fiber.LogoutHandler
-	SessionHandler      *fiber.SessionHandler
+	DeviceIdMiddleware    *fiber.DeviceIdMiddleware
+	SessionIdMiddleware   *fiber.SessionIdMiddleware
+	LoginHandler          *fiber.LoginHandler
+	LogoutHandler         *fiber.LogoutHandler
+	ActiveSessionsHandler *fiber.ActiveSessionsHandler
+	ActiveSessionHandler  *fiber.ActiveSessionHandler
+	SessionByIdHandler    *fiber.SessionByIdHandler
 }
 
 func UseSession(opts *Options) {
@@ -25,7 +27,9 @@ func UseSession(opts *Options) {
 	fiber.UseSessionIdMiddleware(opts.SessionIdMiddleware)
 	fiber.UseLoginHandler(opts.LoginHandler)
 	fiber.UseLogoutHandler(opts.LogoutHandler)
-	fiber.UseSessionHandler(opts.SessionHandler)
+	fiber.UseActiveSessionsHandler(opts.ActiveSessionsHandler)
+	fiber.UseActiveSessionHandler(opts.ActiveSessionHandler)
+	fiber.UseSessionByIdHandler(opts.SessionByIdHandler)
 }
 
 var WireSession = wire.NewSet(
@@ -43,6 +47,9 @@ var WireSession = wire.NewSet(
 	commandHandler.NewVerifyActiveHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.VerifyActive]), new(*commandHandler.VerifyActiveHandler)),
 
+	queryHandler.NewFindByOwnerUserIdHandler,
+	wire.Bind(new(cqrs.QueryHandler[query.FindByOwnerUserId, []*domain.Session]), new(*queryHandler.FindByOwnerUserIdHandler)),
+
 	queryHandler.NewFindByIdHandler,
 	wire.Bind(new(cqrs.QueryHandler[query.FindById, *domain.Session]), new(*queryHandler.FindByIdHandler)),
 
@@ -52,12 +59,15 @@ var WireSession = wire.NewSet(
 	wire.Struct(new(fiber.ProtectMiddleware), "*"),
 	wire.Struct(new(fiber.LoginHandler), "*"),
 	wire.Struct(new(fiber.LogoutHandler), "*"),
-	wire.Struct(new(fiber.SessionHandler), "*"),
+	wire.Struct(new(fiber.ActiveSessionsHandler), "*"),
+	wire.Struct(new(fiber.ActiveSessionHandler), "*"),
+	wire.Struct(new(fiber.SessionByIdHandler), "*"),
 
 	model.NewGormSessionRepo,
 	wire.Bind(new(commandHandler.InitiateWriteModel), new(*model.GormSessionRepo)),
 	wire.Bind(new(commandHandler.RenewWriteModel), new(*model.GormSessionRepo)),
 	wire.Bind(new(commandHandler.RevokeWriteModel), new(*model.GormSessionRepo)),
 	wire.Bind(new(commandHandler.VerifyActiveReadModel), new(*model.GormSessionRepo)),
+	wire.Bind(new(queryHandler.FindByOwnerUserIdReadModel), new(*model.GormSessionRepo)),
 	wire.Bind(new(queryHandler.FindByIdReadModel), new(*model.GormSessionRepo)),
 )

@@ -45,6 +45,23 @@ func (m *GormSessionRepo) FindById(_ context.Context, id domain.SessionId) (*dom
 	return m.toSession(model)
 }
 
+func (m *GormSessionRepo) FindByOwnerUserId(_ context.Context, userId domain.UserId) ([]*domain.Session, error) {
+	userIdString := uuid.UUID(userId).String()
+	var models []GormSessionModel
+	if err := m.database.Where("owner_user_id = ?", userIdString).Find(&models).Error; err != nil {
+		return nil, err
+	}
+	sessions := make([]*domain.Session, len(models))
+	for i, model := range models {
+		session, err := m.toSession(model)
+		if err != nil {
+			return nil, err
+		}
+		sessions[i] = session
+	}
+	return sessions, nil
+}
+
 func (m *GormSessionRepo) Create(ctx context.Context, session *domain.Session) error {
 	if _, err := m.FindById(ctx, session.Id); err == nil {
 		return domain.ErrSessionAlreadyExists

@@ -35,7 +35,7 @@ func (e *CreateRootUser) onStart(ctx context.Context) error {
 		Profile: domain.Profile{
 			FirstName: e.Env.String(
 				"INITIAL_USER_FIRST_NAME",
-				"Initial",
+				"Root",
 			),
 			LastName: e.Env.String(
 				"INITIAL_USER_LAST_NAME",

@@ -20,7 +20,7 @@ type sessionHandlerResponse struct {
 	ExpiresAt string              `json:"expires_at"`
 }
 
-type SessionHandler struct {
+type ActiveSessionHandler struct {
 	*fiber.App
 	// ---
 	RenewMiddleware   *RenewMiddleware
@@ -29,14 +29,20 @@ type SessionHandler struct {
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 }
 
-func UseSessionHandler(handler *SessionHandler) {
+func UseActiveSessionHandler(handler *ActiveSessionHandler) {
 	session := handler.Group("/session")
 	session.Use(handler.RenewMiddleware.Handle)
 	session.Use(handler.ProtectMiddleware.Handle)
-	session.Get("/", handler.get)
+	session.Get("/active", handler.get)
 }
 
-func (e *SessionHandler) get(ctx *fiber.Ctx) error {
+//	@Summary	Get details of the active session
+//	@Produce	json
+//	@Success	200	{object}	sessionHandlerResponse
+//	@Failure	401
+//	@Router		/session/active [get]
+//	@Tags		Session
+func (e *ActiveSessionHandler) get(ctx *fiber.Ctx) error {
 	sessionIdCookie := ctx.Cookies("session_id")
 
 	sessionId, err := uuid.FromString(sessionIdCookie)

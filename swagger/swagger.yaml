@@ -1,4 +1,21 @@
 basePath: /
+definitions:
+  fiber.sessionHandlerOwner:
+    properties:
+      device_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  fiber.sessionHandlerResponse:
+    properties:
+      expires_at:
+        type: string
+      id:
+        type: string
+      owned_by:
+        $ref: '#/definitions/fiber.sessionHandlerOwner'
+    type: object
 info:
   contact: {}
   description: A minimal identity provider
@@ -44,6 +61,58 @@ paths:
         "401":
           description: Unauthorized
       summary: Revoke the current session
+      tags:
+      - Session
+  /session:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/fiber.sessionHandlerResponse'
+            type: array
+        "401":
+          description: Unauthorized
+      summary: List all active sessions belonging to the owner of the current session
+      tags:
+      - Session
+  /session/{id}:
+    get:
+      parameters:
+      - description: Session Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/fiber.sessionHandlerResponse'
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+      summary: Get details of a session
+      tags:
+      - Session
+  /session/active:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/fiber.sessionHandlerResponse'
+        "401":
+          description: Unauthorized
+      summary: Get details of the active session
       tags:
       - Session
 swagger: "2.0"

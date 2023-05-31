@@ -27,6 +27,8 @@ func NewRevokeHandler(
 }
 
 func (h *RevokeHandler) Handle(ctx context.Context, cmd command.Revoke) error {
+	// TODO: Ensure that only the owner can revoke the session
+
 	return h.writeModel.Delete(ctx, cmd.Id, func(session *domain.Session) error {
 		if err := session.Revoke(); err != nil {
 			return err
