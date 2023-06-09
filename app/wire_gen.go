@@ -11,6 +11,10 @@ import (
 	"github.com/oechsler-it/identity/fiber"
 	"github.com/oechsler-it/identity/gorm"
 	"github.com/oechsler-it/identity/modules"
+	"github.com/oechsler-it/identity/modules/permission"
+	app3 "github.com/oechsler-it/identity/modules/permission/app"
+	fiber3 "github.com/oechsler-it/identity/modules/permission/infra/fiber"
+	model3 "github.com/oechsler-it/identity/modules/permission/infra/model"
 	"github.com/oechsler-it/identity/modules/session"
 	app2 "github.com/oechsler-it/identity/modules/session/app"
 	fiber2 "github.com/oechsler-it/identity/modules/session/infra/fiber"
@@ -129,10 +133,22 @@ func New() *App {
 		ActiveSessionHandler:  activeSessionHandler,
 		SessionByIdHandler:    sessionByIdHandler,
 	}
+	gormPermissionRepo := model3.NewGormPermissionRepo(db, logger, hooks)
+	appCreateHandler := app3.NewCreateHandler(validate, gormPermissionRepo)
+	fiberCreateHandler := &fiber3.CreateHandler{
+		App:    fiberApp,
+		Logger: logger,
+		Env:    env,
+		Create: appCreateHandler,
+	}
+	permissionOptions := &permission.Options{
+		CreateHandler: fiberCreateHandler,
+	}
 	modulesOptions := &modules.Options{
-		App:     fiberApp,
-		User:    userOptions,
-		Session: sessionOptions,
+		App:        fiberApp,
+		User:       userOptions,
+		Session:    sessionOptions,
+		Permission: permissionOptions,
 	}
 	appOptions := &Options{
 		Runtime: runtimeRuntime,

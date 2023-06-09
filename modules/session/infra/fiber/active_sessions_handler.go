@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type sessionsHandlerResponses []sessionHandlerResponse
+type sessionsHandlerResponses []sessionResponse
 
 type ActiveSessionsHandler struct {
 	*fiber.App
@@ -60,9 +60,9 @@ func (e *ActiveSessionsHandler) get(ctx *fiber.Ctx) error {
 
 	response := make(sessionsHandlerResponses, len(sessions))
 	for i, session := range sessions {
-		response[i] = sessionHandlerResponse{
+		response[i] = sessionResponse{
 			Id: uuid.UUID(session.Id).String(),
-			OwnedBy: sessionHandlerOwner{
+			OwnedBy: sessionOwner{
 				DeviceId: uuid.UUID(session.OwnedBy.DeviceId).String(),
 				UserId:   uuid.UUID(session.OwnedBy.UserId).String(),
 			},

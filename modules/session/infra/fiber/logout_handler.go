@@ -22,16 +22,16 @@ type LogoutHandler struct {
 func UseLogoutHandler(handler *LogoutHandler) {
 	logout := handler.Group("/logout")
 	logout.Use(handler.ProtectMiddleware.Handle)
-	logout.Post("/", handler.post)
+	logout.Delete("/", handler.delete)
 }
 
 //	@Summary	Revoke the current session
 //	@Produce	text/plain
-//	@Success	200
+//	@Success	204
 //	@Failure	401
-//	@Router		/logout [post]
+//	@Router		/logout [delete]
 //	@Tags		Session
-func (e *LogoutHandler) post(ctx *fiber.Ctx) error {
+func (e *LogoutHandler) delete(ctx *fiber.Ctx) error {
 	sessionId := ctx.Locals("session_id").(domain.SessionId)
 
 	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
@@ -46,5 +46,5 @@ func (e *LogoutHandler) post(ctx *fiber.Ctx) error {
 		"session_id": uuid.UUID(sessionId).String(),
 	}).Info("session revoked")
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

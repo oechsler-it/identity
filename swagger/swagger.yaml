@@ -1,20 +1,27 @@
 basePath: /
 definitions:
-  fiber.sessionHandlerOwner:
+  fiber.createPermissionRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  fiber.sessionOwner:
     properties:
       device_id:
         type: string
       user_id:
         type: string
     type: object
-  fiber.sessionHandlerResponse:
+  fiber.sessionResponse:
     properties:
       expires_at:
         type: string
       id:
         type: string
       owned_by:
-        $ref: '#/definitions/fiber.sessionHandlerOwner'
+        $ref: '#/definitions/fiber.sessionOwner'
     type: object
 info:
   contact: {}
@@ -52,17 +59,38 @@ paths:
       tags:
       - Session
   /logout:
-    post:
+    delete:
       produces:
       - text/plain
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
         "401":
           description: Unauthorized
       summary: Revoke the current session
       tags:
       - Session
+  /permission:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create command
+        in: body
+        name: command
+        required: true
+        schema:
+          $ref: '#/definitions/fiber.createPermissionRequest'
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+      summary: Create a new permission
+      tags:
+      - Permission
   /session:
     get:
       produces:
@@ -72,7 +100,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/fiber.sessionHandlerResponse'
+              $ref: '#/definitions/fiber.sessionResponse'
             type: array
         "401":
           description: Unauthorized
@@ -93,7 +121,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/fiber.sessionHandlerResponse'
+            $ref: '#/definitions/fiber.sessionResponse'
         "401":
           description: Unauthorized
         "404":
@@ -109,7 +137,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/fiber.sessionHandlerResponse'
+            $ref: '#/definitions/fiber.sessionResponse'
         "401":
           description: Unauthorized
       summary: Get details of the active session

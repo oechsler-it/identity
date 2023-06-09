@@ -60,7 +60,7 @@ const docTemplate = `{
             }
         },
         "/logout": {
-            "post": {
+            "delete": {
                 "produces": [
                     "text/plain"
                 ],
@@ -69,11 +69,44 @@ const docTemplate = `{
                 ],
                 "summary": "Revoke the current session",
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "204": {
+                        "description": "No Content"
                     },
                     "401": {
                         "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/permission": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Permission"
+                ],
+                "summary": "Create a new permission",
+                "parameters": [
+                    {
+                        "description": "Create command",
+                        "name": "command",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/fiber.createPermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     }
                 }
             }
@@ -93,7 +126,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/fiber.sessionHandlerResponse"
+                                "$ref": "#/definitions/fiber.sessionResponse"
                             }
                         }
                     },
@@ -116,7 +149,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/fiber.sessionHandlerResponse"
+                            "$ref": "#/definitions/fiber.sessionResponse"
                         }
                     },
                     "401": {
@@ -147,7 +180,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/fiber.sessionHandlerResponse"
+                            "$ref": "#/definitions/fiber.sessionResponse"
                         }
                     },
                     "401": {
@@ -161,7 +194,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "fiber.sessionHandlerOwner": {
+        "fiber.createPermissionRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "fiber.sessionOwner": {
             "type": "object",
             "properties": {
                 "device_id": {
@@ -172,7 +216,7 @@ const docTemplate = `{
                 }
             }
         },
-        "fiber.sessionHandlerResponse": {
+        "fiber.sessionResponse": {
             "type": "object",
             "properties": {
                 "expires_at": {
@@ -182,7 +226,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "owned_by": {
-                    "$ref": "#/definitions/fiber.sessionHandlerOwner"
+                    "$ref": "#/definitions/fiber.sessionOwner"
                 }
             }
         }

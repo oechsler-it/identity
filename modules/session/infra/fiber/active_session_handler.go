@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-type sessionHandlerOwner struct {
+type sessionOwner struct {
 	DeviceId string `json:"device_id"`
 	UserId   string `json:"user_id"`
 }
 
-type sessionHandlerResponse struct {
-	Id        string              `json:"id"`
-	OwnedBy   sessionHandlerOwner `json:"owned_by"`
-	ExpiresAt string              `json:"expires_at"`
+type sessionResponse struct {
+	Id        string       `json:"id"`
+	OwnedBy   sessionOwner `json:"owned_by"`
+	ExpiresAt string       `json:"expires_at"`
 }
 
 type ActiveSessionHandler struct {
@@ -38,7 +38,7 @@ func UseActiveSessionHandler(handler *ActiveSessionHandler) {
 
 //	@Summary	Get details of the active session
 //	@Produce	json
-//	@Success	200	{object}	sessionHandlerResponse
+//	@Success	200	{object}	sessionResponse
 //	@Failure	401
 //	@Router		/session/active [get]
 //	@Tags		Session
@@ -59,9 +59,9 @@ func (e *ActiveSessionHandler) get(ctx *fiber.Ctx) error {
 
 	// ---
 
-	return ctx.JSON(sessionHandlerResponse{
+	return ctx.JSON(sessionResponse{
 		Id: uuid.UUID(session.Id).String(),
-		OwnedBy: sessionHandlerOwner{
+		OwnedBy: sessionOwner{
 			DeviceId: uuid.UUID(session.OwnedBy.DeviceId).String(),
 			UserId:   uuid.UUID(session.OwnedBy.UserId).String(),
 		},

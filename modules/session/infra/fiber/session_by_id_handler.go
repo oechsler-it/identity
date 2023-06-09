@@ -29,7 +29,7 @@ func UseSessionByIdHandler(handler *SessionByIdHandler) {
 //	@Summary	Get details of a session
 //	@Produce	json
 //	@Param		id	path		string	true	"Session Id"
-//	@Success	200	{object}	sessionHandlerResponse
+//	@Success	200	{object}	sessionResponse
 //	@Failure	401
 //	@Failure	404
 //	@Router		/session/{id} [get]
@@ -52,9 +52,9 @@ func (e *SessionByIdHandler) get(ctx *fiber.Ctx) error {
 
 	// ---
 
-	return ctx.JSON(sessionHandlerResponse{
+	return ctx.JSON(sessionResponse{
 		Id: uuid.UUID(session.Id).String(),
-		OwnedBy: sessionHandlerOwner{
+		OwnedBy: sessionOwner{
 			DeviceId: uuid.UUID(session.OwnedBy.DeviceId).String(),
 			UserId:   uuid.UUID(session.OwnedBy.UserId).String(),
 		},

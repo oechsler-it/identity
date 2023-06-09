@@ -53,7 +53,7 @@
             }
         },
         "/logout": {
-            "post": {
+            "delete": {
                 "produces": [
                     "text/plain"
                 ],
@@ -62,11 +62,44 @@
                 ],
                 "summary": "Revoke the current session",
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "204": {
+                        "description": "No Content"
                     },
                     "401": {
                         "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/permission": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Permission"
+                ],
+                "summary": "Create a new permission",
+                "parameters": [
+                    {
+                        "description": "Create command",
+                        "name": "command",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/fiber.createPermissionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     }
                 }
             }
@@ -86,7 +119,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/fiber.sessionHandlerResponse"
+                                "$ref": "#/definitions/fiber.sessionResponse"
                             }
                         }
                     },
@@ -109,7 +142,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/fiber.sessionHandlerResponse"
+                            "$ref": "#/definitions/fiber.sessionResponse"
                         }
                     },
                     "401": {
@@ -140,7 +173,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/fiber.sessionHandlerResponse"
+                            "$ref": "#/definitions/fiber.sessionResponse"
                         }
                     },
                     "401": {
@@ -154,7 +187,18 @@
         }
     },
     "definitions": {
-        "fiber.sessionHandlerOwner": {
+        "fiber.createPermissionRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "fiber.sessionOwner": {
             "type": "object",
             "properties": {
                 "device_id": {
@@ -165,7 +209,7 @@
                 }
             }
         },
-        "fiber.sessionHandlerResponse": {
+        "fiber.sessionResponse": {
             "type": "object",
             "properties": {
                 "expires_at": {
@@ -175,7 +219,7 @@
                     "type": "string"
                 },
                 "owned_by": {
-                    "$ref": "#/definitions/fiber.sessionHandlerOwner"
+                    "$ref": "#/definitions/fiber.sessionOwner"
                 }
             }
         }
