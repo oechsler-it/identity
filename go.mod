@@ -6,7 +6,7 @@ require (
 	github.com/alexedwards/argon2id v0.0.0-20211130144151-3585854a6387
 	github.com/alexpantyukhin/go-pattern-match v0.0.0-20220927063258-d8df640eed1c
 	github.com/go-playground/validator/v10 v10.11.2
-	github.com/gofiber/fiber/v2 v2.42.0
+	github.com/gofiber/fiber/v2 v2.43.0
 	github.com/gofiber/swagger v0.1.9
 	github.com/google/wire v0.5.0
 	github.com/joho/godotenv v1.5.1
@@ -14,6 +14,8 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/swaggo/swag v1.8.10
+	gorm.io/driver/postgres v1.5.0
+	gorm.io/gorm v1.24.7-0.20230324020705-b444011d094d
 )
 
 require (
@@ -63,6 +65,4 @@ require (
 	golang.org/x/tools v0.7.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.5.0 // indirect
-	gorm.io/gorm v1.24.7-0.20230324020705-b444011d094d // indirect
 )
