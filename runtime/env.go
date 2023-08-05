@@ -21,9 +21,13 @@ func NewEnv() *Env {
 		_ = godotenv.Load("../.env")
 	}
 
+	if err := godotenv.Overload(".env.local"); err != nil {
+		_ = godotenv.Overload("../.env.local")
+	}
+
 	appEnvFilename := fmt.Sprintf(".env.%s", e.Get())
-	if err := godotenv.Load(appEnvFilename); err != nil {
-		_ = godotenv.Load(fmt.Sprintf("../%s", appEnvFilename))
+	if err := godotenv.Overload(appEnvFilename); err != nil {
+		_ = godotenv.Overload(fmt.Sprintf("../%s", appEnvFilename))
 	}
 
 	if len(e.Get()) == 0 {
