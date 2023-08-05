@@ -35,11 +35,14 @@ func New() *App {
 	env := runtime.NewEnv()
 	logger := runtime.NewLogger(env)
 	runtimeRuntime := runtime.NewRuntime(hooks, logger)
-	fiberApp := fiber.NewFiber()
+	fiberApp := fiber.NewFiber(env, logger)
+	quicFiber := fiber.NewQUICFiber(fiberApp)
 	options := &fiber.Options{
-		Hooks:  hooks,
-		Logger: logger,
-		App:    fiberApp,
+		Env:     env,
+		Hooks:   hooks,
+		Logger:  logger,
+		App:     fiberApp,
+		QuicApp: quicFiber,
 	}
 	swaggerOptions := &swagger.Options{
 		App: fiberApp,
