@@ -7,6 +7,13 @@ definitions:
       name:
         type: string
     type: object
+  fiber.permissionResponse:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
   fiber.sessionOwner:
     properties:
       device_id:
@@ -71,6 +78,19 @@ paths:
       tags:
       - Session
   /permission:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/fiber.permissionResponse'
+        "401":
+          description: Unauthorized
+      summary: Get all permissions
+      tags:
+      - Permission
     post:
       consumes:
       - application/json
@@ -88,6 +108,8 @@ paths:
           description: Created
         "400":
           description: Bad Request
+        "401":
+          description: Unauthorized
       summary: Create a new permission
       tags:
       - Permission

@@ -139,13 +139,23 @@ func New() *App {
 	gormPermissionRepo := model3.NewGormPermissionRepo(db, logger, hooks)
 	appCreateHandler := app3.NewCreateHandler(validate, gormPermissionRepo)
 	fiberCreateHandler := &fiber3.CreateHandler{
-		App:    fiberApp,
-		Logger: logger,
-		Env:    env,
-		Create: appCreateHandler,
+		App:               fiberApp,
+		Logger:            logger,
+		Env:               env,
+		ProtectMiddleware: protectMiddleware,
+		RenewMiddleware:   renewMiddleware,
+		Create:            appCreateHandler,
+	}
+	findAllHandler := app3.NewFindAllHandler(gormPermissionRepo)
+	permissionsHandler := &fiber3.PermissionsHandler{
+		App:               fiberApp,
+		RenewMiddleware:   renewMiddleware,
+		ProtectMiddleware: protectMiddleware,
+		FindAll:           findAllHandler,
 	}
 	permissionOptions := &permission.Options{
-		CreateHandler: fiberCreateHandler,
+		CreateHandler:      fiberCreateHandler,
+		PermissionsHandler: permissionsHandler,
 	}
 	modulesOptions := &modules.Options{
 		App:        fiberApp,

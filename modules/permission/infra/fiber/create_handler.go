@@ -2,10 +2,12 @@ package fiber
 
 import (
 	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/permission/app/command"
 	"github.com/oechsler-it/identity/modules/permission/domain"
+	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
 	"github.com/oechsler-it/identity/runtime"
 	"github.com/sirupsen/logrus"
 )
@@ -21,11 +23,16 @@ type CreateHandler struct {
 	Logger *logrus.Logger
 	Env    *runtime.Env
 	// ---
+	ProtectMiddleware *sessionFiber.ProtectMiddleware
+	RenewMiddleware   *sessionFiber.RenewMiddleware
+	// ---
 	Create cqrs.CommandHandler[command.Create]
 }
 
 func UseCreateHandler(handler *CreateHandler) {
 	create := handler.Group("/permission")
+	create.Use(handler.ProtectMiddleware.Handle)
+	create.Use(handler.RenewMiddleware.Handle)
 	create.Post("/", handler.post)
 }
 
@@ -35,6 +42,7 @@ func UseCreateHandler(handler *CreateHandler) {
 //	@Param		command	body	createPermissionRequest	true	"Create command"
 //	@Success	201
 //	@Failure	400
+//	@Failure	401
 //	@Router		/permission [post]
 //	@Tags		Permission
 func (e *CreateHandler) post(ctx *fiber.Ctx) error {
@@ -56,6 +64,8 @@ func (e *CreateHandler) post(ctx *fiber.Ctx) error {
 		}
 		return err
 	}
+
+	ctx.Set("Location", "/permission/"+dto.Name)
 
 	return ctx.SendStatus(fiber.StatusCreated)
 }

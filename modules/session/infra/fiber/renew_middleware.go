@@ -1,6 +1,8 @@
 package fiber
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/session/app/command"
@@ -8,7 +10,6 @@ import (
 	"github.com/oechsler-it/identity/runtime"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 type RenewMiddleware struct {
@@ -42,7 +43,7 @@ func (e *RenewMiddleware) Handle(ctx *fiber.Ctx) error {
 
 	e.Logger.WithFields(logrus.Fields{
 		"session_id": uuid.UUID(sessionId).String(),
-	}).Info("session renewed")
+	}).Info("Session renewed")
 
 	return ctx.Next()
 }
