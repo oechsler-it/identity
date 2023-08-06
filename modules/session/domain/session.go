@@ -1,6 +1,8 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 type Session struct {
 	Id        SessionId `validate:"required"`
@@ -32,6 +34,12 @@ func (s *Session) MustBeRenewable() error {
 		return ErrSessionMustBeRenewable
 	}
 	return nil
+}
+
+// Getters
+
+func (s *Session) IsActive() bool {
+	return time.Now().Before(s.ExpiresAt)
 }
 
 // Actions
@@ -76,7 +84,10 @@ func (s *Session) Renew(expiresAt time.Time) error {
 	return nil
 }
 
-func (s *Session) Revoke() error {
+func (s *Session) Revoke(revokingEntity Owner) error {
+	if err := s.MustBeOwnedBy(revokingEntity); err != nil {
+		return err
+	}
 	if err := s.MustNotBeExpired(); err != nil {
 		return err
 	}

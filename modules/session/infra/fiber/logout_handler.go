@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/session/app/command"
+	"github.com/oechsler-it/identity/modules/session/app/query"
 	"github.com/oechsler-it/identity/modules/session/domain"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
@@ -16,7 +17,8 @@ type LogoutHandler struct {
 	// ---
 	ProtectMiddleware *ProtectMiddleware
 	// ---
-	Revoke cqrs.CommandHandler[command.Revoke]
+	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
+	Revoke   cqrs.CommandHandler[command.Revoke]
 }
 
 func UseLogoutHandler(handler *LogoutHandler) {
@@ -34,8 +36,16 @@ func UseLogoutHandler(handler *LogoutHandler) {
 func (e *LogoutHandler) delete(ctx *fiber.Ctx) error {
 	sessionId := ctx.Locals("session_id").(domain.SessionId)
 
-	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
+	session, err := e.FindById.Handle(ctx.Context(), query.FindById{
 		Id: sessionId,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
+		Id:             session.Id,
+		RevokingEntity: session.OwnedBy,
 	}); err != nil {
 		return err
 	}
@@ -43,7 +53,7 @@ func (e *LogoutHandler) delete(ctx *fiber.Ctx) error {
 	ctx.ClearCookie("session_id")
 
 	e.Logger.WithFields(logrus.Fields{
-		"session_id": uuid.UUID(sessionId).String(),
+		"session_id": uuid.UUID(session.Id).String(),
 	}).Info("Session revoked")
 
 	return ctx.SendStatus(fiber.StatusNoContent)

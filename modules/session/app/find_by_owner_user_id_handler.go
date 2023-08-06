@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+
 	"github.com/oechsler-it/identity/modules/session/app/query"
 	"github.com/oechsler-it/identity/modules/session/domain"
+	"github.com/samber/lo"
 )
 
 type FindByOwnerUserIdReadModel interface {
@@ -21,5 +23,11 @@ func NewFindByOwnerUserIdHandler(readModel FindByOwnerUserIdReadModel) *FindByOw
 }
 
 func (h *FindByOwnerUserIdHandler) Handle(ctx context.Context, query query.FindByOwnerUserId) ([]*domain.Session, error) {
-	return h.readModel.FindByOwnerUserId(ctx, query.UserId)
+	sessions, err := h.readModel.FindByOwnerUserId(ctx, query.UserId)
+	if err != nil {
+		return nil, err
+	}
+	return lo.Filter(sessions, func(session *domain.Session, _ int) bool {
+		return session.IsActive()
+	}), nil
 }

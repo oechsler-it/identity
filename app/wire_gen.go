@@ -93,11 +93,20 @@ func New() *App {
 	protectMiddleware := &fiber2.ProtectMiddleware{
 		VerifyActive: verifyActiveHandler,
 	}
+	findByIdHandler := app2.NewFindByIdHandler(gormSessionRepo)
 	revokeHandler := app2.NewRevokeHandler(validate, gormSessionRepo)
 	logoutHandler := &fiber2.LogoutHandler{
 		App:               fiberApp,
 		Logger:            logger,
 		ProtectMiddleware: protectMiddleware,
+		FindById:          findByIdHandler,
+		Revoke:            revokeHandler,
+	}
+	revokeSessionHandler := &fiber2.RevokeSessionHandler{
+		App:               fiberApp,
+		Logger:            logger,
+		ProtectMiddleware: protectMiddleware,
+		FindById:          findByIdHandler,
 		Revoke:            revokeHandler,
 	}
 	renewHandler := app2.NewRenewHandler(validate, gormSessionRepo)
@@ -106,7 +115,6 @@ func New() *App {
 		Env:    env,
 		Renew:  renewHandler,
 	}
-	findByIdHandler := app2.NewFindByIdHandler(gormSessionRepo)
 	findByOwnerUserIdHandler := app2.NewFindByOwnerUserIdHandler(gormSessionRepo)
 	activeSessionsHandler := &fiber2.ActiveSessionsHandler{
 		App:               fiberApp,
@@ -132,6 +140,7 @@ func New() *App {
 		SessionIdMiddleware:   sessionIdMiddleware,
 		LoginHandler:          loginHandler,
 		LogoutHandler:         logoutHandler,
+		RevokeSessionHandler:  revokeSessionHandler,
 		ActiveSessionsHandler: activeSessionsHandler,
 		ActiveSessionHandler:  activeSessionHandler,
 		SessionByIdHandler:    sessionByIdHandler,

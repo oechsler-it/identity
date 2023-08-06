@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/oechsler-it/identity/modules/session/app/command"
 	"github.com/oechsler-it/identity/modules/session/domain"
@@ -27,10 +28,8 @@ func NewRevokeHandler(
 }
 
 func (h *RevokeHandler) Handle(ctx context.Context, cmd command.Revoke) error {
-	// TODO: Ensure that only the owner can revoke the session
-
 	return h.writeModel.Delete(ctx, cmd.Id, func(session *domain.Session) error {
-		if err := session.Revoke(); err != nil {
+		if err := session.Revoke(cmd.RevokingEntity); err != nil {
 			return err
 		}
 

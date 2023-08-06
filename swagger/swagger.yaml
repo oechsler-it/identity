@@ -187,4 +187,26 @@ paths:
       summary: Get details of the active session
       tags:
       - Session
+  /session/revoke/{id}:
+    delete:
+      parameters:
+      - description: Id of the session
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+      summary: Revoke a session
+      tags:
+      - Session
 swagger: "2.0"
