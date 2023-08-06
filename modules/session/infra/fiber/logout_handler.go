@@ -44,7 +44,7 @@ func (e *LogoutHandler) delete(ctx *fiber.Ctx) error {
 
 	e.Logger.WithFields(logrus.Fields{
 		"session_id": uuid.UUID(sessionId).String(),
-	}).Info("session revoked")
+	}).Info("Session revoked")
 
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

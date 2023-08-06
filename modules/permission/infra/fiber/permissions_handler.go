@@ -16,7 +16,6 @@ type permissionResponse struct {
 type PermissionsHandler struct {
 	*fiber.App
 	// ---
-	RenewMiddleware   *sessionFiber.RenewMiddleware
 	ProtectMiddleware *sessionFiber.ProtectMiddleware
 	// ---
 	FindAll cqrs.QueryHandler[query.FindAll, []*domain.Permission]
@@ -24,7 +23,6 @@ type PermissionsHandler struct {
 
 func UsePermissionsHandler(handler *PermissionsHandler) {
 	permission := handler.Group("/permission")
-	permission.Use(handler.RenewMiddleware.Handle)
 	permission.Use(handler.ProtectMiddleware.Handle)
 	permission.Get("/", handler.get)
 }

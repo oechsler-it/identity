@@ -141,20 +141,25 @@ func New() *App {
 	fiberCreateHandler := &fiber3.CreateHandler{
 		App:               fiberApp,
 		Logger:            logger,
-		Env:               env,
 		ProtectMiddleware: protectMiddleware,
-		RenewMiddleware:   renewMiddleware,
 		Create:            appCreateHandler,
+	}
+	deleteHandler := app3.NewDeleteHandler(gormPermissionRepo)
+	fiberDeleteHandler := &fiber3.DeleteHandler{
+		App:               fiberApp,
+		Logger:            logger,
+		ProtectMiddleware: protectMiddleware,
+		Delete:            deleteHandler,
 	}
 	findAllHandler := app3.NewFindAllHandler(gormPermissionRepo)
 	permissionsHandler := &fiber3.PermissionsHandler{
 		App:               fiberApp,
-		RenewMiddleware:   renewMiddleware,
 		ProtectMiddleware: protectMiddleware,
 		FindAll:           findAllHandler,
 	}
 	permissionOptions := &permission.Options{
 		CreateHandler:      fiberCreateHandler,
+		DeleteHandler:      fiberDeleteHandler,
 		PermissionsHandler: permissionsHandler,
 	}
 	modulesOptions := &modules.Options{

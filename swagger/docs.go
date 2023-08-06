@@ -135,6 +135,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/permission/{name}": {
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Permission"
+                ],
+                "summary": "Delete a permission",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Name of the permission",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
         "/session": {
             "get": {
                 "produces": [

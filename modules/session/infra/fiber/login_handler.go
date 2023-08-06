@@ -2,6 +2,8 @@ package fiber
 
 import (
 	"errors"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/session/app/command"
@@ -13,7 +15,6 @@ import (
 	"github.com/oechsler-it/identity/runtime"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 type LoginHandler struct {
@@ -102,7 +103,7 @@ func (e *LoginHandler) post(ctx *fiber.Ctx) error {
 		"session_id": uuid.UUID(sessionId).String(),
 		"user_id":    uuid.UUID(user.Id).String(),
 		"device_id":  uuid.UUID(deviceId).String(),
-	}).Info("session initiated")
+	}).Info("Session initiated")
 
 	return ctx.SendStatus(fiber.StatusOK)
 }

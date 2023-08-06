@@ -113,6 +113,28 @@ paths:
       summary: Create a new permission
       tags:
       - Permission
+  /permission/{name}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Name of the permission
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not Found
+      summary: Delete a permission
+      tags:
+      - Permission
   /session:
     get:
       produces:
