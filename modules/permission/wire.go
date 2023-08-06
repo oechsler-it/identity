@@ -36,6 +36,9 @@ var WirePermission = wire.NewSet(
 	queryHandler.NewFindAllHandler,
 	wire.Bind(new(cqrs.QueryHandler[query.FindAll, []*domain.Permission]), new(*queryHandler.FindAllHandler)),
 
+	queryHandler.NewFindByNameHandler,
+	wire.Bind(new(cqrs.QueryHandler[query.FindByName, *domain.Permission]), new(*queryHandler.FindByNameHandler)),
+
 	wire.Struct(new(fiber.CreateHandler), "*"),
 	wire.Struct(new(fiber.DeleteHandler), "*"),
 	wire.Struct(new(fiber.PermissionsHandler), "*"),
@@ -44,4 +47,5 @@ var WirePermission = wire.NewSet(
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormPermissionRepo)),
 	wire.Bind(new(commandHandler.DeleteWriteModel), new(*model.GormPermissionRepo)),
 	wire.Bind(new(queryHandler.FindAllReadModel), new(*model.GormPermissionRepo)),
+	wire.Bind(new(queryHandler.FindByNameReadModel), new(*model.GormPermissionRepo)),
 )

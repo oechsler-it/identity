@@ -8,4 +8,5 @@ var (
 	ErrInvalidPassword           = errors.New("invalid password")
 	ErrAUserExists               = errors.New("a user exists")
 	ErrUserDoesNotHavePermission = errors.New("user does not have permission")
+	ErrUserAlreadyHasPermission  = errors.New("user already has permission")
 )

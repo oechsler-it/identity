@@ -16,8 +16,8 @@ type Options struct {
 }
 
 func UseModules(opts *Options) {
-	user.UseUser(opts.User)
 	session.UseSession(opts.Session)
+	user.UseUser(opts.User)
 	permission.UsePermission(opts.Permission)
 }
 

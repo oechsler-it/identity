@@ -29,15 +29,15 @@ func UseRevokeSessionHandler(handler *RevokeSessionHandler) {
 	session.Delete("/revoke/:id", handler.delete)
 }
 
-// @Summary	Revoke a session
-// @Produce	text/plain
-// @Param		id	path	string	true	"Id of the session"
-// @Success	204
-// @Failure	401
-// @Failure	403
-// @Failure	404
-// @Router		/session/revoke/{id} [delete]
-// @Tags		Session
+//	@Summary	Revoke a session
+//	@Produce	text/plain
+//	@Param		id	path	string	true	"Id of the session"
+//	@Success	204
+//	@Failure	401
+//	@Failure	403
+//	@Failure	404
+//	@Router		/session/revoke/{id} [delete]
+//	@Tags		Session
 func (e *RevokeSessionHandler) delete(ctx *fiber.Ctx) error {
 	sessionIdCookie := ctx.Cookies("session_id")
 

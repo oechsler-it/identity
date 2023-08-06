@@ -7,6 +7,7 @@ import (
 
 	"github.com/oechsler-it/identity/modules/user/domain"
 	"github.com/oechsler-it/identity/runtime"
+	"github.com/samber/lo"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -69,6 +70,21 @@ func (m *GormUserRepo) Create(ctx context.Context, user *domain.User) error {
 	return m.database.Create(m.toModel(user)).Error
 }
 
+func (m *GormUserRepo) Update(ctx context.Context, id domain.UserId, handler func(user *domain.User) error) error {
+	user, err := m.FindById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := handler(user); err != nil {
+		return err
+	}
+
+	user.Id = id
+	model := m.toModel(user)
+	return m.database.Save(&model).Error
+}
+
 func (m *GormUserRepo) toModel(user *domain.User) GormUserModel {
 	return GormUserModel{
 		Id:             uuid.UUID(user.Id).String(),
@@ -77,6 +93,11 @@ func (m *GormUserRepo) toModel(user *domain.User) GormUserModel {
 		FirstName:      user.Profile.FirstName,
 		LastName:       user.Profile.LastName,
 		HashedPassword: string(user.HashedPassword),
+		Permissions: lo.Map(user.Permissions, func(permission domain.Permission, _ int) GormPermissionModel {
+			return GormPermissionModel{
+				Name: string(permission),
+			}
+		}),
 	}
 }
 
@@ -94,6 +115,9 @@ func (m *GormUserRepo) toUser(model GormUserModel) (*domain.User, error) {
 			FirstName: model.FirstName,
 			LastName:  model.LastName,
 		},
+		Permissions: lo.Map(model.Permissions, func(permission GormPermissionModel, _ int) domain.Permission {
+			return domain.Permission(permission.Name)
+		}),
 		HashedPassword: domain.HashedPassword(model.HashedPassword),
 	}, nil
 }

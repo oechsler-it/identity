@@ -41,14 +41,33 @@ func (u *User) MustHavePermission(permission Permission) error {
 	return nil
 }
 
-// Actions
-
-func (u *User) GrantPermission(permission Permission) {
-	u.Permissions = append(u.Permissions, permission)
+func (u *User) MustNotHavePermission(permission Permission) error {
+	if lo.Contains(u.Permissions, permission) {
+		return ErrUserAlreadyHasPermission
+	}
+	return nil
 }
 
-func (u *User) RemovePermission(permission Permission) {
+// Actions
+
+func (u *User) GrantPermission(permission Permission) error {
+	if err := u.MustNotHavePermission(permission); err != nil {
+		return err
+	}
+
+	u.Permissions = append(u.Permissions, permission)
+
+	return nil
+}
+
+func (u *User) RemovePermission(permission Permission) error {
+	if err := u.MustHavePermission(permission); err != nil {
+		return err
+	}
+
 	u.Permissions = lo.Filter(u.Permissions, func(p Permission, _ int) bool {
 		return p != permission
 	})
+
+	return nil
 }

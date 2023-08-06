@@ -8,17 +8,20 @@ import (
 	"github.com/oechsler-it/identity/modules/user/app/command"
 	"github.com/oechsler-it/identity/modules/user/app/query"
 	"github.com/oechsler-it/identity/modules/user/domain"
+	"github.com/oechsler-it/identity/modules/user/infra/fiber"
 	"github.com/oechsler-it/identity/modules/user/infra/hook"
 	"github.com/oechsler-it/identity/modules/user/infra/model"
 	"github.com/oechsler-it/identity/modules/user/infra/service"
 )
 
 type Options struct {
-	CreateRootUser *hook.CreateRootUser
+	CreateRootUser  *hook.CreateRootUser
+	GrantPermission *fiber.GrantPermissionHandler
 }
 
 func UseUser(opts *Options) {
 	hook.UseCreateRootUser(opts.CreateRootUser)
+	fiber.UseGrantPermissionHandler(opts.GrantPermission)
 }
 
 var WireUser = wire.NewSet(
@@ -33,15 +36,20 @@ var WireUser = wire.NewSet(
 	commandHandler.NewVerifyNoUserExistsHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.VerifyNoUserExists]), new(*commandHandler.VerifyNoUserExistsHandler)),
 
+	commandHandler.NewGrantPermissionHandler,
+	wire.Bind(new(cqrs.CommandHandler[command.GrantPermission]), new(*commandHandler.GrantPermissionHandler)),
+
 	queryHandler.NewFindByIdentifierHandler,
 	wire.Bind(new(cqrs.QueryHandler[query.FindByIdentifier, *domain.User]), new(*queryHandler.FindByIdentifierHandler)),
 
 	wire.Struct(new(hook.CreateRootUser), "*"),
+	wire.Struct(new(fiber.GrantPermissionHandler), "*"),
 
 	model.NewGormUserRepo,
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.VerifyPasswordReadModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.VerifyNoUserExistsRedModel), new(*model.GormUserRepo)),
+	wire.Bind(new(commandHandler.GrantPermissionWriteModel), new(*model.GormUserRepo)),
 	wire.Bind(new(queryHandler.FindByIdentifierReadModel), new(*model.GormUserRepo)),
 
 	service.NewArgon2idPasswordService,

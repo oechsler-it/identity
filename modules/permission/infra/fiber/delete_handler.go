@@ -28,7 +28,7 @@ func UseDeleteHandler(handler *DeleteHandler) {
 }
 
 //	@Summary	Delete a permission
-//	@Accept		json
+//	@Accept		text/plain
 //	@Produce	text/plain
 //	@Param		name	path	string	true	"Name of the permission"
 //	@Success	204

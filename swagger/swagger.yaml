@@ -116,7 +116,7 @@ paths:
   /permission/{name}:
     delete:
       consumes:
-      - application/json
+      - text/plain
       parameters:
       - description: Name of the permission
         in: path
@@ -209,4 +209,33 @@ paths:
       summary: Revoke a session
       tags:
       - Session
+  /user/{id}/grant/{permission}:
+    post:
+      consumes:
+      - text/plain
+      parameters:
+      - description: ID of the user
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Name of the permission
+        in: path
+        name: permission
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+      summary: Grant a permission to a user
+      tags:
+      - User
 swagger: "2.0"
