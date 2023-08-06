@@ -16,7 +16,7 @@ type Session struct {
 // Assertions
 
 func (s *Session) MustNotBeExpired() error {
-	if time.Now().After(s.ExpiresAt) {
+	if !s.IsActive() {
 		return ErrSessionIsExpired
 	}
 	return nil

@@ -1,17 +1,16 @@
 package model
 
 import (
+	"context"
 	"errors"
+	"reflect"
+
 	"github.com/oechsler-it/identity/modules/user/domain"
 	"github.com/oechsler-it/identity/runtime"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"reflect"
-)
-
-import (
-	"context"
+	"gorm.io/gorm/clause"
 )
 
 type GormUserRepo struct {
@@ -51,7 +50,9 @@ func (m *GormUserRepo) Count(ctx context.Context) (int, error) {
 func (m *GormUserRepo) FindById(_ context.Context, id domain.UserId) (*domain.User, error) {
 	userId := uuid.UUID(id).String()
 	var model GormUserModel
-	if err := m.database.Where("id = ?", userId).First(&model).Error; err != nil {
+	if err := m.database.Where("id = ?", userId).
+		Preload(clause.Associations).
+		First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrUserNotFound
 		}

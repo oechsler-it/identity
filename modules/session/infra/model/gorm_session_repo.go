@@ -2,12 +2,14 @@ package model
 
 import (
 	"context"
+	"reflect"
+
 	"github.com/oechsler-it/identity/modules/session/domain"
 	"github.com/oechsler-it/identity/runtime"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"reflect"
+	"gorm.io/gorm/clause"
 )
 
 type GormSessionRepo struct {
@@ -39,7 +41,9 @@ func (m *GormSessionRepo) NextId(_ context.Context) (domain.SessionId, error) {
 func (m *GormSessionRepo) FindById(_ context.Context, id domain.SessionId) (*domain.Session, error) {
 	sessionId := uuid.UUID(id).String()
 	var model GormSessionModel
-	if err := m.database.Where("id = ?", sessionId).First(&model).Error; err != nil {
+	if err := m.database.Where("id = ?", sessionId).
+		Preload(clause.Associations).
+		First(&model).Error; err != nil {
 		return nil, domain.ErrSessionNotFound
 	}
 	return m.toSession(model)
@@ -48,7 +52,9 @@ func (m *GormSessionRepo) FindById(_ context.Context, id domain.SessionId) (*dom
 func (m *GormSessionRepo) FindByOwnerUserId(_ context.Context, userId domain.UserId) ([]*domain.Session, error) {
 	userIdString := uuid.UUID(userId).String()
 	var models []GormSessionModel
-	if err := m.database.Where("owner_user_id = ?", userIdString).Find(&models).Error; err != nil {
+	if err := m.database.Where("owner_user_id = ?", userIdString).
+		Preload(clause.Associations).
+		Find(&models).Error; err != nil {
 		return nil, err
 	}
 	sessions := make([]*domain.Session, len(models))

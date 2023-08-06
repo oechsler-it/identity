@@ -98,6 +98,8 @@ func (m *GormPermissionRepo) Delete(ctx context.Context, name domain.PermissionN
 func (m *GormPermissionRepo) toPermission(model GormPermissionModel) (*domain.Permission, error) {
 	return &domain.Permission{
 		Name:        domain.PermissionName(model.Name),
+		CreatedAt:   model.CreatedAt,
+		UpdatedAt:   model.UpdatedAt,
 		Description: model.Description,
 	}, nil
 }
@@ -105,6 +107,8 @@ func (m *GormPermissionRepo) toPermission(model GormPermissionModel) (*domain.Pe
 func (m *GormPermissionRepo) toModel(permission *domain.Permission) GormPermissionModel {
 	return GormPermissionModel{
 		Name:        string(permission.Name),
+		CreatedAt:   permission.CreatedAt,
+		UpdatedAt:   permission.UpdatedAt,
 		Description: permission.Description,
 	}
 }
