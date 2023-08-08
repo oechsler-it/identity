@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/user/app/command"
 	"github.com/oechsler-it/identity/modules/user/domain"
@@ -18,17 +19,20 @@ type GrantPermissionWriteModel interface {
 type GrantPermissionHandler struct {
 	permissionFindByName cqrs.QueryHandler[permissionQuery.FindByName, *permissionDomain.Permission]
 	// ---
+	validate   *validator.Validate
 	writeModel GrantPermissionWriteModel
 }
 
 func NewGrantPermissionHandler(
 	permissionFindByName cqrs.QueryHandler[permissionQuery.FindByName, *permissionDomain.Permission],
 	// ---
+	validate *validator.Validate,
 	writeModel GrantPermissionWriteModel,
 ) *GrantPermissionHandler {
 	return &GrantPermissionHandler{
 		permissionFindByName: permissionFindByName,
 		// ---
+		validate:   validate,
 		writeModel: writeModel,
 	}
 }
@@ -47,6 +51,10 @@ func (h *GrantPermissionHandler) Handle(ctx context.Context, cmd command.GrantPe
 		permission := domain.Permission(permission.Name)
 
 		if err := user.GrantPermission(permission); err != nil {
+			return err
+		}
+
+		if err := h.validate.Struct(user); err != nil {
 			return err
 		}
 

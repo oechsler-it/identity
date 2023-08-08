@@ -34,11 +34,11 @@ func UseGrantPermissionHandler(handler *GrantPermissionHandler) {
 //	@Summary	Grant a permission to a user
 //	@Accept		text/plain
 //	@Produce	text/plain
-//	@Param		id			path	string	true	"ID of the user"
+//	@Param		id			path	string	true	"Id of the user"
 //	@Param		permission	path	string	true	"Name of the permission"
 //	@Success	204
+//	@Failure	400
 //	@Failure	401
-//	@Failure	403
 //	@Failure	404
 //	@Router		/user/{id}/grant/{permission} [post]
 //	@Tags		User
@@ -63,7 +63,7 @@ func (e *GrantPermissionHandler) post(ctx *fiber.Ctx) error {
 			return ctx.Status(fiber.StatusNotFound).SendString(err.Error())
 		}
 		if errors.Is(err, domain.ErrUserAlreadyHasPermission) {
-			return ctx.Status(fiber.StatusForbidden).SendString(err.Error())
+			return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 		}
 		return err
 	}

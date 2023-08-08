@@ -74,7 +74,7 @@ func New() *App {
 	}
 	gormPermissionRepo := model3.NewGormPermissionRepo(db, logger, hooks)
 	findByNameHandler := app3.NewFindByNameHandler(gormPermissionRepo)
-	grantPermissionHandler := app.NewGrantPermissionHandler(findByNameHandler, gormUserRepo)
+	grantPermissionHandler := app.NewGrantPermissionHandler(findByNameHandler, validate, gormUserRepo)
 	fiberGrantPermissionHandler := &fiber3.GrantPermissionHandler{
 		App:               fiberApp,
 		Logger:            logger,

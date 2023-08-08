@@ -7,7 +7,7 @@ type GormPermissionModel struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	Description string
-	Users       []GormUserModel `gorm:"many2many:user_permissions;"`
+	Users       []GormUserModel `gorm:"many2many:user_permissions;constraint:OnDelete:CASCADE;"`
 }
 
 func (GormPermissionModel) TableName() string {

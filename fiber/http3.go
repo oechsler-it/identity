@@ -19,6 +19,11 @@ func NewQUICFiber(
 	app.Use(func(c *fiber.Ctx) error {
 		baseUrl := c.BaseURL()
 		addr := strings.TrimPrefix(strings.TrimPrefix(baseUrl, "http://"), "https://")
+		if strings.Contains(addr, ":") {
+			addr = fmt.Sprintf(":%s", strings.Split(addr, ":")[1])
+		} else {
+			addr = ":443"
+		}
 		c.Set("Alt-Svc", fmt.Sprintf("h3=\"%s\"; ma=60", addr))
 		return c.Next()
 	})

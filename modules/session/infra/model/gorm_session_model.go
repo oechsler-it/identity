@@ -10,7 +10,7 @@ type GormSessionModel struct {
 	UpdatedAt     time.Time
 	OwnerDeviceId string
 	OwnerUserId   string
-	OwnerUser     GormUserModel `gorm:"foreignkey:OwnerUserId"`
+	OwnerUser     GormUserModel `gorm:"foreignkey:OwnerUserId;constraint:OnDelete:CASCADE;"`
 	ExpiresAt     time.Time
 	Renewable     bool
 }

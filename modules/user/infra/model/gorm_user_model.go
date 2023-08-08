@@ -11,8 +11,8 @@ type GormUserModel struct {
 	FirstName      string
 	LastName       string
 	HashedPassword string
-	Permissions    []GormPermissionModel `gorm:"many2many:user_permissions;"`
-	Sessions       []GormSessionModel    `gorm:"foreignkey:OwnerUserId"`
+	Permissions    []GormPermissionModel `gorm:"many2many:user_permissions;constraint:OnDelete:CASCADE;"`
+	Sessions       []GormSessionModel    `gorm:"foreignkey:OwnerUserId;"`
 }
 
 func (GormUserModel) TableName() string {

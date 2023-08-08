@@ -8,6 +8,7 @@ import (
 	"github.com/oechsler-it/identity/runtime"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type GormPermissionRepo struct {
@@ -34,7 +35,8 @@ func NewGormPermissionRepo(
 
 func (m *GormPermissionRepo) FindAll(_ context.Context) ([]*domain.Permission, error) {
 	var models []GormPermissionModel
-	if err := m.database.Find(&models).Error; err != nil {
+	if err := m.database.Find(&models).
+		Preload(clause.Associations).Error; err != nil {
 		return nil, err
 	}
 	permissions := make([]*domain.Permission, len(models))
@@ -50,7 +52,9 @@ func (m *GormPermissionRepo) FindAll(_ context.Context) ([]*domain.Permission, e
 
 func (m *GormPermissionRepo) FindByName(_ context.Context, name domain.PermissionName) (*domain.Permission, error) {
 	var model GormPermissionModel
-	if err := m.database.Where("name = ?", name).First(&model).Error; err != nil {
+	if err := m.database.Where("name = ?", name).
+		Preload(clause.Associations).
+		First(&model).Error; err != nil {
 		return nil, domain.ErrPermissionNotFound
 	}
 	return m.toPermission(model)

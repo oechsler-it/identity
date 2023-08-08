@@ -30,11 +30,11 @@ func NewFiber(
 
 		http3 := env.Bool("FIBER_HTTP3", false)
 		if scheme == "https" && http3 {
-			logger.WithField("address", addr).Info("Fiber is listening with HTTP/3")
+			logger.WithField("address", addr).Info("Fiber is listening (with HTTP/3 adaptor)")
 			return nil
 		}
 		if scheme == "https" {
-			logger.WithField("address", addr).Info("Fiber is listening with TLS")
+			logger.WithField("address", addr).Info("Fiber is listening (with TLS)")
 			return nil
 		}
 		logger.WithField("address", addr).Info("Fiber is listening")
