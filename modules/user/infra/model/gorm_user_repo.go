@@ -85,6 +85,24 @@ func (m *GormUserRepo) Update(ctx context.Context, id domain.UserId, handler fun
 	return m.database.Save(&model).Error
 }
 
+func (m *GormUserRepo) Revoke(ctx context.Context, id domain.UserId, handler func(user *domain.User) error) error {
+	user, err := m.FindById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	currModel := m.toModel(user)
+	if err := handler(user); err != nil {
+		return err
+	}
+
+	user.Id = id
+	model := m.toModel(user)
+	return m.database.Model(&currModel).
+		Association("Permissions").
+		Replace(&model.Permissions)
+}
+
 func (m *GormUserRepo) toModel(user *domain.User) GormUserModel {
 	return GormUserModel{
 		Id:             uuid.UUID(user.Id).String(),

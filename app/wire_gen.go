@@ -81,9 +81,17 @@ func New() *App {
 		ProtectMiddleware: protectMiddleware,
 		Grant:             grantPermissionHandler,
 	}
+	revokePermissionHandler := app.NewRevokePermissionHandler(validate, gormUserRepo)
+	fiberRevokePermissionHandler := &fiber3.RevokePermissionHandler{
+		App:               fiberApp,
+		Logger:            logger,
+		ProtectMiddleware: protectMiddleware,
+		Revoke:            revokePermissionHandler,
+	}
 	userOptions := &user.Options{
-		CreateRootUser:  createRootUser,
-		GrantPermission: fiberGrantPermissionHandler,
+		CreateRootUser:   createRootUser,
+		GrantPermission:  fiberGrantPermissionHandler,
+		RevokePermission: fiberRevokePermissionHandler,
 	}
 	deviceIdMiddleware := &fiber2.DeviceIdMiddleware{
 		App:    fiberApp,

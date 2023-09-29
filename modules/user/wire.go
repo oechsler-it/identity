@@ -15,13 +15,15 @@ import (
 )
 
 type Options struct {
-	CreateRootUser  *hook.CreateRootUser
-	GrantPermission *fiber.GrantPermissionHandler
+	CreateRootUser   *hook.CreateRootUser
+	GrantPermission  *fiber.GrantPermissionHandler
+	RevokePermission *fiber.RevokePermissionHandler
 }
 
 func UseUser(opts *Options) {
 	hook.UseCreateRootUser(opts.CreateRootUser)
 	fiber.UseGrantPermissionHandler(opts.GrantPermission)
+	fiber.UseRevokePermissionHandler(opts.RevokePermission)
 }
 
 var WireUser = wire.NewSet(
@@ -39,17 +41,22 @@ var WireUser = wire.NewSet(
 	commandHandler.NewGrantPermissionHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.GrantPermission]), new(*commandHandler.GrantPermissionHandler)),
 
+	commandHandler.NewRevokePermissionHandler,
+	wire.Bind(new(cqrs.CommandHandler[command.RevokePermission]), new(*commandHandler.RevokePermissionHandler)),
+
 	queryHandler.NewFindByIdentifierHandler,
 	wire.Bind(new(cqrs.QueryHandler[query.FindByIdentifier, *domain.User]), new(*queryHandler.FindByIdentifierHandler)),
 
 	wire.Struct(new(hook.CreateRootUser), "*"),
 	wire.Struct(new(fiber.GrantPermissionHandler), "*"),
+	wire.Struct(new(fiber.RevokePermissionHandler), "*"),
 
 	model.NewGormUserRepo,
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.VerifyPasswordReadModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.VerifyNoUserExistsRedModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.GrantPermissionWriteModel), new(*model.GormUserRepo)),
+	wire.Bind(new(commandHandler.RevokePermissionWriteModel), new(*model.GormUserRepo)),
 	wire.Bind(new(queryHandler.FindByIdentifierReadModel), new(*model.GormUserRepo)),
 
 	service.NewArgon2idPasswordService,
