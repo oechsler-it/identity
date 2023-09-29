@@ -2,6 +2,7 @@ package fiber
 
 import (
 	"errors"
+	"net/url"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
@@ -19,7 +20,10 @@ type GrantPermissionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	ProtectMiddleware *sessionFiber.ProtectMiddleware
+	RenewMiddleware      *sessionFiber.RenewMiddleware
+	ProtectMiddleware    *sessionFiber.ProtectMiddleware
+	UserMiddleware       *UserMiddleware
+	PermissionMiddleware *PermissionMiddleware
 	// ---
 	Grant cqrs.CommandHandler[command.GrantPermission]
 }
@@ -27,21 +31,26 @@ type GrantPermissionHandler struct {
 func UseGrantPermissionHandler(handler *GrantPermissionHandler) {
 	user := handler.Group("/user/:id")
 	grant := user.Group("/grant")
+	grant.Use(handler.RenewMiddleware.Handle)
 	grant.Use(handler.ProtectMiddleware.Handle)
+	grant.Use(handler.UserMiddleware.Handle)
+	grant.Use(handler.PermissionMiddleware.Has("all:user:permission:grant"))
 	grant.Post("/:permission", handler.post)
 }
 
-//	@Summary	Grant a permission to a user
-//	@Accept		text/plain
-//	@Produce	text/plain
-//	@Param		id			path	string	true	"Id of the user"
-//	@Param		permission	path	string	true	"Name of the permission"
-//	@Success	204
-//	@Failure	400
-//	@Failure	401
-//	@Failure	404
-//	@Router		/user/{id}/grant/{permission} [post]
-//	@Tags		User
+// @Summary	Grant a permission to a user
+// @Accept		text/plain
+// @Produce	text/plain
+// @Param		id			path	string	true	"Id of the user"
+// @Param		permission	path	string	true	"Name of the permission"
+// @Success	204
+// @Failure	400
+// @Failure	401
+// @Failure	403
+// @Failure	404
+// @Failure	500
+// @Router		/user/{id}/grant/{permission} [post]
+// @Tags		User
 func (e *GrantPermissionHandler) post(ctx *fiber.Ctx) error {
 	idParam := ctx.Params("id")
 
@@ -51,10 +60,14 @@ func (e *GrantPermissionHandler) post(ctx *fiber.Ctx) error {
 	}
 
 	permission := ctx.Params("permission")
+	permissionUnescaped, err := url.PathUnescape(permission)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
 
 	if err := e.Grant.Handle(ctx.Context(), command.GrantPermission{
 		Id:         domain.UserId(id),
-		Permission: domain.Permission(permission),
+		Permission: domain.Permission(permissionUnescaped),
 	}); err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return ctx.Status(fiber.StatusNotFound).SendString(err.Error())

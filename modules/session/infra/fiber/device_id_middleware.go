@@ -25,7 +25,7 @@ func (e *DeviceIdMiddleware) handle(ctx *fiber.Ctx) error {
 		deviceId = uuid.NewV4()
 
 		e.Logger.WithFields(logrus.Fields{
-			"deviceId": deviceId.String(),
+			"device_id": deviceId.String(),
 		}).Info("Registered new device id")
 	}
 

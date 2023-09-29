@@ -18,12 +18,14 @@ type Options struct {
 	CreateRootUser   *hook.CreateRootUser
 	GrantPermission  *fiber.GrantPermissionHandler
 	RevokePermission *fiber.RevokePermissionHandler
+	HasPermission    *fiber.HasPermissionHandler
 }
 
 func UseUser(opts *Options) {
 	hook.UseCreateRootUser(opts.CreateRootUser)
 	fiber.UseGrantPermissionHandler(opts.GrantPermission)
 	fiber.UseRevokePermissionHandler(opts.RevokePermission)
+	fiber.UseHasPermissionHandler(opts.HasPermission)
 }
 
 var WireUser = wire.NewSet(
@@ -41,6 +43,9 @@ var WireUser = wire.NewSet(
 	commandHandler.NewGrantPermissionHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.GrantPermission]), new(*commandHandler.GrantPermissionHandler)),
 
+	commandHandler.NewVerifyHasPermissionHandler,
+	wire.Bind(new(cqrs.CommandHandler[command.VerifyHasPermission]), new(*commandHandler.VerifyHasPermissionHandler)),
+
 	commandHandler.NewRevokePermissionHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.RevokePermission]), new(*commandHandler.RevokePermissionHandler)),
 
@@ -50,6 +55,9 @@ var WireUser = wire.NewSet(
 	wire.Struct(new(hook.CreateRootUser), "*"),
 	wire.Struct(new(fiber.GrantPermissionHandler), "*"),
 	wire.Struct(new(fiber.RevokePermissionHandler), "*"),
+	wire.Struct(new(fiber.HasPermissionHandler), "*"),
+	wire.Struct(new(fiber.UserMiddleware), "*"),
+	wire.Struct(new(fiber.PermissionMiddleware), "*"),
 
 	model.NewGormUserRepo,
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormUserRepo)),
@@ -57,6 +65,7 @@ var WireUser = wire.NewSet(
 	wire.Bind(new(commandHandler.VerifyNoUserExistsRedModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.GrantPermissionWriteModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.RevokePermissionWriteModel), new(*model.GormUserRepo)),
+	wire.Bind(new(commandHandler.VerifyHasPermissionRedModel), new(*model.GormUserRepo)),
 	wire.Bind(new(queryHandler.FindByIdentifierReadModel), new(*model.GormUserRepo)),
 
 	service.NewArgon2idPasswordService,

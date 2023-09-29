@@ -7,18 +7,18 @@
 package app
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/oechsler-it/identity/fiber"
 	"github.com/oechsler-it/identity/gorm"
 	"github.com/oechsler-it/identity/modules"
 	"github.com/oechsler-it/identity/modules/permission"
-	app3 "github.com/oechsler-it/identity/modules/permission/app"
+	app2 "github.com/oechsler-it/identity/modules/permission/app"
 	fiber4 "github.com/oechsler-it/identity/modules/permission/infra/fiber"
-	model3 "github.com/oechsler-it/identity/modules/permission/infra/model"
+	hook2 "github.com/oechsler-it/identity/modules/permission/infra/hook"
+	model2 "github.com/oechsler-it/identity/modules/permission/infra/model"
 	"github.com/oechsler-it/identity/modules/session"
-	app2 "github.com/oechsler-it/identity/modules/session/app"
+	app3 "github.com/oechsler-it/identity/modules/session/app"
 	fiber2 "github.com/oechsler-it/identity/modules/session/infra/fiber"
-	model2 "github.com/oechsler-it/identity/modules/session/infra/model"
+	model3 "github.com/oechsler-it/identity/modules/session/infra/model"
 	"github.com/oechsler-it/identity/modules/user"
 	"github.com/oechsler-it/identity/modules/user/app"
 	fiber3 "github.com/oechsler-it/identity/modules/user/infra/fiber"
@@ -27,6 +27,7 @@ import (
 	"github.com/oechsler-it/identity/modules/user/infra/service"
 	"github.com/oechsler-it/identity/runtime"
 	"github.com/oechsler-it/identity/swagger"
+	"github.com/oechsler-it/identity/validator"
 )
 
 // Injectors from wire.go:
@@ -59,39 +60,69 @@ func New() *App {
 	validate := validator.New()
 	argon2idPasswordService := service.NewArgon2idPasswordService()
 	createHandler := app.NewCreateHandler(validate, argon2idPasswordService, gormUserRepo)
+	gormPermissionRepo := model2.NewGormPermissionRepo(db, logger, hooks)
+	findByNameHandler := app2.NewFindByNameHandler(gormPermissionRepo)
+	grantPermissionHandler := app.NewGrantPermissionHandler(findByNameHandler, validate, gormUserRepo)
 	createRootUser := &hook.CreateRootUser{
-		Hooks:              hooks,
-		Logger:             logger,
-		Env:                env,
-		Repo:               gormUserRepo,
-		VerifyNoUserExists: verifyNoUserExistsHandler,
-		Create:             createHandler,
+		Hooks:                hooks,
+		Logger:               logger,
+		Env:                  env,
+		Repo:                 gormUserRepo,
+		VerifyNoUserExists:   verifyNoUserExistsHandler,
+		Create:               createHandler,
+		FindPermissionByName: findByNameHandler,
+		Grant:                grantPermissionHandler,
 	}
-	gormSessionRepo := model2.NewGormSessionRepo(db, logger, hooks)
-	verifyActiveHandler := app2.NewVerifyActiveHandler(gormSessionRepo)
+	gormSessionRepo := model3.NewGormSessionRepo(db, logger, hooks)
+	renewHandler := app3.NewRenewHandler(validate, gormSessionRepo)
+	renewMiddleware := &fiber2.RenewMiddleware{
+		Logger: logger,
+		Env:    env,
+		Renew:  renewHandler,
+	}
+	verifyActiveHandler := app3.NewVerifyActiveHandler(gormSessionRepo)
 	protectMiddleware := &fiber2.ProtectMiddleware{
 		VerifyActive: verifyActiveHandler,
 	}
-	gormPermissionRepo := model3.NewGormPermissionRepo(db, logger, hooks)
-	findByNameHandler := app3.NewFindByNameHandler(gormPermissionRepo)
-	grantPermissionHandler := app.NewGrantPermissionHandler(findByNameHandler, validate, gormUserRepo)
+	findByIdHandler := app3.NewFindByIdHandler(gormSessionRepo)
+	findByIdentifierHandler := app.NewFindByIdentifierHandler(gormUserRepo)
+	userMiddleware := &fiber3.UserMiddleware{
+		FindSessionById: findByIdHandler,
+		FindById:        findByIdentifierHandler,
+	}
+	verifyHasPermissionHandler := app.NewVerifyHasPermissionHandler(gormUserRepo)
+	permissionMiddleware := &fiber3.PermissionMiddleware{
+		VerifyHasPermission: verifyHasPermissionHandler,
+	}
 	fiberGrantPermissionHandler := &fiber3.GrantPermissionHandler{
-		App:               fiberApp,
-		Logger:            logger,
-		ProtectMiddleware: protectMiddleware,
-		Grant:             grantPermissionHandler,
+		App:                  fiberApp,
+		Logger:               logger,
+		RenewMiddleware:      renewMiddleware,
+		ProtectMiddleware:    protectMiddleware,
+		UserMiddleware:       userMiddleware,
+		PermissionMiddleware: permissionMiddleware,
+		Grant:                grantPermissionHandler,
 	}
 	revokePermissionHandler := app.NewRevokePermissionHandler(validate, gormUserRepo)
 	fiberRevokePermissionHandler := &fiber3.RevokePermissionHandler{
-		App:               fiberApp,
-		Logger:            logger,
-		ProtectMiddleware: protectMiddleware,
-		Revoke:            revokePermissionHandler,
+		App:                  fiberApp,
+		Logger:               logger,
+		RenewMiddleware:      renewMiddleware,
+		ProtectMiddleware:    protectMiddleware,
+		UserMiddleware:       userMiddleware,
+		PermissionMiddleware: permissionMiddleware,
+		Revoke:               revokePermissionHandler,
+	}
+	hasPermissionHandler := &fiber3.HasPermissionHandler{
+		App:    fiberApp,
+		Logger: logger,
+		Has:    verifyHasPermissionHandler,
 	}
 	userOptions := &user.Options{
 		CreateRootUser:   createRootUser,
 		GrantPermission:  fiberGrantPermissionHandler,
 		RevokePermission: fiberRevokePermissionHandler,
+		HasPermission:    hasPermissionHandler,
 	}
 	deviceIdMiddleware := &fiber2.DeviceIdMiddleware{
 		App:    fiberApp,
@@ -100,8 +131,7 @@ func New() *App {
 	sessionIdMiddleware := &fiber2.SessionIdMiddleware{
 		App: fiberApp,
 	}
-	initiateHandler := app2.NewInitiateHandler(validate, gormSessionRepo)
-	findByIdentifierHandler := app.NewFindByIdentifierHandler(gormUserRepo)
+	initiateHandler := app3.NewInitiateHandler(validate, gormSessionRepo)
 	verifyPasswordHandler := app.NewVerifyPasswordHandler(argon2idPasswordService, gormUserRepo)
 	loginHandler := &fiber2.LoginHandler{
 		App:                  fiberApp,
@@ -112,8 +142,7 @@ func New() *App {
 		FindUserByIdentifier: findByIdentifierHandler,
 		VerifyPassword:       verifyPasswordHandler,
 	}
-	findByIdHandler := app2.NewFindByIdHandler(gormSessionRepo)
-	revokeHandler := app2.NewRevokeHandler(validate, gormSessionRepo)
+	revokeHandler := app3.NewRevokeHandler(validate, gormSessionRepo)
 	logoutHandler := &fiber2.LogoutHandler{
 		App:               fiberApp,
 		Logger:            logger,
@@ -124,17 +153,12 @@ func New() *App {
 	revokeSessionHandler := &fiber2.RevokeSessionHandler{
 		App:               fiberApp,
 		Logger:            logger,
+		RenewMiddleware:   renewMiddleware,
 		ProtectMiddleware: protectMiddleware,
 		FindById:          findByIdHandler,
 		Revoke:            revokeHandler,
 	}
-	renewHandler := app2.NewRenewHandler(validate, gormSessionRepo)
-	renewMiddleware := &fiber2.RenewMiddleware{
-		Logger: logger,
-		Env:    env,
-		Renew:  renewHandler,
-	}
-	findByOwnerUserIdHandler := app2.NewFindByOwnerUserIdHandler(gormSessionRepo)
+	findByOwnerUserIdHandler := app3.NewFindByOwnerUserIdHandler(gormSessionRepo)
 	activeSessionsHandler := &fiber2.ActiveSessionsHandler{
 		App:               fiberApp,
 		RenewMiddleware:   renewMiddleware,
@@ -164,30 +188,44 @@ func New() *App {
 		ActiveSessionHandler:  activeSessionHandler,
 		SessionByIdHandler:    sessionByIdHandler,
 	}
-	appCreateHandler := app3.NewCreateHandler(validate, gormPermissionRepo)
+	verifyPermissionNotExistsHandler := app2.NewVerifyPermissionNotExistsHandler(gormPermissionRepo)
+	appCreateHandler := app2.NewCreateHandler(validate, gormPermissionRepo)
+	createBasePermissions := &hook2.CreateBasePermissions{
+		Hooks:                     hooks,
+		Logger:                    logger,
+		Env:                       env,
+		VerifyPermissionNotExists: verifyPermissionNotExistsHandler,
+		Create:                    appCreateHandler,
+	}
 	fiberCreateHandler := &fiber4.CreateHandler{
-		App:               fiberApp,
-		Logger:            logger,
-		ProtectMiddleware: protectMiddleware,
-		Create:            appCreateHandler,
+		App:                  fiberApp,
+		Logger:               logger,
+		RenewMiddleware:      renewMiddleware,
+		ProtectMiddleware:    protectMiddleware,
+		UserMiddleware:       userMiddleware,
+		PermissionMiddleware: permissionMiddleware,
+		Create:               appCreateHandler,
 	}
-	deleteHandler := app3.NewDeleteHandler(gormPermissionRepo)
+	deleteHandler := app2.NewDeleteHandler(gormPermissionRepo)
 	fiberDeleteHandler := &fiber4.DeleteHandler{
-		App:               fiberApp,
-		Logger:            logger,
-		ProtectMiddleware: protectMiddleware,
-		Delete:            deleteHandler,
+		App:                  fiberApp,
+		Logger:               logger,
+		RenewMiddleware:      renewMiddleware,
+		ProtectMiddleware:    protectMiddleware,
+		UserMiddleware:       userMiddleware,
+		PermissionMiddleware: permissionMiddleware,
+		Delete:               deleteHandler,
 	}
-	findAllHandler := app3.NewFindAllHandler(gormPermissionRepo)
+	findAllHandler := app2.NewFindAllHandler(gormPermissionRepo)
 	permissionsHandler := &fiber4.PermissionsHandler{
-		App:               fiberApp,
-		ProtectMiddleware: protectMiddleware,
-		FindAll:           findAllHandler,
+		App:     fiberApp,
+		FindAll: findAllHandler,
 	}
 	permissionOptions := &permission.Options{
-		CreateHandler:      fiberCreateHandler,
-		DeleteHandler:      fiberDeleteHandler,
-		PermissionsHandler: permissionsHandler,
+		CreateBasePermissions: createBasePermissions,
+		CreateHandler:         fiberCreateHandler,
+		DeleteHandler:         fiberDeleteHandler,
+		PermissionsHandler:    permissionsHandler,
 	}
 	modulesOptions := &modules.Options{
 		App:        fiberApp,

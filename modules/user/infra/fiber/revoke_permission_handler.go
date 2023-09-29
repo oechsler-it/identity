@@ -2,6 +2,7 @@ package fiber
 
 import (
 	"errors"
+	"net/url"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
@@ -18,7 +19,10 @@ type RevokePermissionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	ProtectMiddleware *sessionFiber.ProtectMiddleware
+	RenewMiddleware      *sessionFiber.RenewMiddleware
+	ProtectMiddleware    *sessionFiber.ProtectMiddleware
+	UserMiddleware       *UserMiddleware
+	PermissionMiddleware *PermissionMiddleware
 	// ---
 	Revoke cqrs.CommandHandler[command.RevokePermission]
 }
@@ -26,21 +30,25 @@ type RevokePermissionHandler struct {
 func UseRevokePermissionHandler(handler *RevokePermissionHandler) {
 	user := handler.Group("/user/:id")
 	revoke := user.Group("/revoke")
+	revoke.Use(handler.RenewMiddleware.Handle)
 	revoke.Use(handler.ProtectMiddleware.Handle)
+	revoke.Use(handler.UserMiddleware.Handle)
+	revoke.Use(handler.PermissionMiddleware.Has("all:user:permission:revoke"))
 	revoke.Delete("/:permission", handler.delete)
 }
 
-//	@Summary	Revoke a permission from a user
-//	@Accept		text/plain
-//	@Produce	text/plain
-//	@Param		id			path	string	true	"Id of the user"
-//	@Param		permission	path	string	true	"Name of the permission"
-//	@Success	204
-//	@Failure	400
-//	@Failure	401
-//	@Failure	404
-//	@Router		/user/{id}/revoke/{permission} [delete]
-//	@Tags		User
+// @Summary	Revoke a permission from a user
+// @Accept		text/plain
+// @Produce	text/plain
+// @Param		id			path	string	true	"Id of the user"
+// @Param		permission	path	string	true	"Name of the permission"
+// @Success	204
+// @Failure	400
+// @Failure	401
+// @Failure	404
+// @Failure	500
+// @Router		/user/{id}/revoke/{permission} [delete]
+// @Tags		User
 func (e *RevokePermissionHandler) delete(ctx *fiber.Ctx) error {
 	idParam := ctx.Params("id")
 
@@ -50,10 +58,14 @@ func (e *RevokePermissionHandler) delete(ctx *fiber.Ctx) error {
 	}
 
 	permission := ctx.Params("permission")
+	permissionUnescaped, err := url.PathUnescape(permission)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
 
 	if err := e.Revoke.Handle(ctx.Context(), command.RevokePermission{
 		Id:         domain.UserId(id),
-		Permission: domain.Permission(permission),
+		Permission: domain.Permission(permissionUnescaped),
 	}); err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return ctx.Status(fiber.StatusNotFound).SendString(err.Error())

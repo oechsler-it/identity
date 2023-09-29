@@ -17,7 +17,7 @@ type Options struct {
 func NewPostgres(opts *Options) *gorm.DB {
 	dsn := opts.Env.String("POSTGRES_DSN")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger:      logger.Default.LogMode(logger.Info),
+		Logger:      logger.Default.LogMode(logger.Silent),
 		PrepareStmt: true,
 	})
 	if err != nil {

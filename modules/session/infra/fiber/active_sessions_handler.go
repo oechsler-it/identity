@@ -28,12 +28,13 @@ func UseActiveSessionsHandler(handler *ActiveSessionsHandler) {
 	session.Get("/", handler.get)
 }
 
-//	@Summary	List all active sessions belonging to the owner of the current session
-//	@Produce	json
-//	@Success	200	{object}	sessionsHandlerResponses
-//	@Failure	401
-//	@Router		/session [get]
-//	@Tags		Session
+// @Summary	List all active sessions belonging to the owner of the current session
+// @Produce	json
+// @Success	200	{object}	sessionsHandlerResponses
+// @Failure	401
+// @Failure	500
+// @Router		/session [get]
+// @Tags		Session
 func (e *ActiveSessionsHandler) get(ctx *fiber.Ctx) error {
 	sessionIdCookie := ctx.Cookies("session_id")
 

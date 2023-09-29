@@ -8,6 +8,7 @@ import (
 	"github.com/oechsler-it/identity/modules/permission/app/command"
 	"github.com/oechsler-it/identity/modules/permission/domain"
 	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	userFiber "github.com/oechsler-it/identity/modules/user/infra/fiber"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,26 +22,34 @@ type CreateHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	ProtectMiddleware *sessionFiber.ProtectMiddleware
+	RenewMiddleware      *sessionFiber.RenewMiddleware
+	ProtectMiddleware    *sessionFiber.ProtectMiddleware
+	UserMiddleware       *userFiber.UserMiddleware
+	PermissionMiddleware *userFiber.PermissionMiddleware
 	// ---
 	Create cqrs.CommandHandler[command.Create]
 }
 
 func UseCreateHandler(handler *CreateHandler) {
 	create := handler.Group("/permission")
-	create.Use(handler.ProtectMiddleware.Handle)
-	create.Post("/", handler.post)
+	create.Post("/",
+		handler.RenewMiddleware.Handle,
+		handler.ProtectMiddleware.Handle,
+		handler.UserMiddleware.Handle,
+		handler.PermissionMiddleware.Has("all:permission:create"),
+		handler.post)
 }
 
-//	@Summary	Create a new permission
-//	@Accept		json
-//	@Produce	text/plain
-//	@Param		command	body	createPermissionRequest	true	"Create command"
-//	@Success	201
-//	@Failure	400
-//	@Failure	401
-//	@Router		/permission [post]
-//	@Tags		Permission
+// @Summary	Create a new permission
+// @Accept		json
+// @Produce	text/plain
+// @Param		command	body	createPermissionRequest	true	"Create command"
+// @Success	201
+// @Failure	400
+// @Failure	401
+// @Failure	500
+// @Router		/permission [post]
+// @Tags		Permission
 func (e *CreateHandler) post(ctx *fiber.Ctx) error {
 	if ctx.Get("Content-Type") != "application/json" {
 		return fiber.ErrUnsupportedMediaType

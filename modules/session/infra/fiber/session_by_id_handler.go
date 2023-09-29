@@ -26,14 +26,15 @@ func UseSessionByIdHandler(handler *SessionByIdHandler) {
 	session.Get("/:id", handler.get)
 }
 
-//	@Summary	Get details of a session
-//	@Produce	json
-//	@Param		id	path		string	true	"Session Id"
-//	@Success	200	{object}	sessionResponse
-//	@Failure	401
-//	@Failure	404
-//	@Router		/session/{id} [get]
-//	@Tags		Session
+// @Summary	Get details of a session
+// @Produce	json
+// @Param		id	path		string	true	"Session Id"
+// @Success	200	{object}	sessionResponse
+// @Failure	401
+// @Failure	404
+// @Failure	500
+// @Router		/session/{id} [get]
+// @Tags		Session
 func (e *SessionByIdHandler) get(ctx *fiber.Ctx) error {
 	sessionId, err := uuid.FromString(ctx.Params("id"))
 	if err != nil {

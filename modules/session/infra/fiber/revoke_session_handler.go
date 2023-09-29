@@ -17,6 +17,7 @@ type RevokeSessionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
+	RenewMiddleware   *RenewMiddleware
 	ProtectMiddleware *ProtectMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
@@ -25,19 +26,21 @@ type RevokeSessionHandler struct {
 
 func UseRevokeSessionHandler(handler *RevokeSessionHandler) {
 	session := handler.Group("/session")
+	session.Use(handler.RenewMiddleware.Handle)
 	session.Use(handler.ProtectMiddleware.Handle)
 	session.Delete("/revoke/:id", handler.delete)
 }
 
-//	@Summary	Revoke a session
-//	@Produce	text/plain
-//	@Param		id	path	string	true	"Id of the session"
-//	@Success	204
-//	@Failure	401
-//	@Failure	403
-//	@Failure	404
-//	@Router		/session/revoke/{id} [delete]
-//	@Tags		Session
+// @Summary	Revoke a session
+// @Produce	text/plain
+// @Param		id	path	string	true	"Id of the session"
+// @Success	204
+// @Failure	401
+// @Failure	403
+// @Failure	404
+// @Failure	500
+// @Router		/session/revoke/{id} [delete]
+// @Tags		Session
 func (e *RevokeSessionHandler) delete(ctx *fiber.Ctx) error {
 	sessionIdCookie := ctx.Cookies("session_id")
 

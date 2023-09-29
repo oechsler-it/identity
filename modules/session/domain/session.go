@@ -8,7 +8,7 @@ type Session struct {
 	Id        SessionId `validate:"required"`
 	CreatedAt time.Time `validate:"required"`
 	UpdatedAt time.Time `validate:"required"`
-	OwnedBy   Owner     `validate:"required,dive"`
+	OwnedBy   Owner     `validate:"required"`
 	ExpiresAt time.Time `validate:"required"`
 	Renewable bool
 }

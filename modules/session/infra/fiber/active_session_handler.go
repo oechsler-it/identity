@@ -36,12 +36,13 @@ func UseActiveSessionHandler(handler *ActiveSessionHandler) {
 	session.Get("/active", handler.get)
 }
 
-//	@Summary	Get details of the active session
-//	@Produce	json
-//	@Success	200	{object}	sessionResponse
-//	@Failure	401
-//	@Router		/session/active [get]
-//	@Tags		Session
+// @Summary	Get details of the active session
+// @Produce	json
+// @Success	200	{object}	sessionResponse
+// @Failure	401
+// @Failure	500
+// @Router		/session/active [get]
+// @Tags		Session
 func (e *ActiveSessionHandler) get(ctx *fiber.Ctx) error {
 	sessionIdCookie := ctx.Cookies("session_id")
 

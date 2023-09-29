@@ -9,16 +9,19 @@ import (
 	"github.com/oechsler-it/identity/modules/permission/app/query"
 	"github.com/oechsler-it/identity/modules/permission/domain"
 	"github.com/oechsler-it/identity/modules/permission/infra/fiber"
+	"github.com/oechsler-it/identity/modules/permission/infra/hook"
 	"github.com/oechsler-it/identity/modules/permission/infra/model"
 )
 
 type Options struct {
-	CreateHandler      *fiber.CreateHandler
-	DeleteHandler      *fiber.DeleteHandler
-	PermissionsHandler *fiber.PermissionsHandler
+	CreateBasePermissions *hook.CreateBasePermissions
+	CreateHandler         *fiber.CreateHandler
+	DeleteHandler         *fiber.DeleteHandler
+	PermissionsHandler    *fiber.PermissionsHandler
 }
 
 func UsePermission(opts *Options) {
+	hook.UseCreateBasePermissions(opts.CreateBasePermissions)
 	fiber.UseCreateHandler(opts.CreateHandler)
 	fiber.UseDeleteHandler(opts.DeleteHandler)
 	fiber.UsePermissionsHandler(opts.PermissionsHandler)
@@ -33,6 +36,9 @@ var WirePermission = wire.NewSet(
 	commandHandler.NewDeleteHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.Delete]), new(*commandHandler.DeleteHandler)),
 
+	commandHandler.NewVerifyPermissionNotExistsHandler,
+	wire.Bind(new(cqrs.CommandHandler[command.VerifyPermissionNotExists]), new(*commandHandler.VerifyPermissionNotExistsHandler)),
+
 	queryHandler.NewFindAllHandler,
 	wire.Bind(new(cqrs.QueryHandler[query.FindAll, []*domain.Permission]), new(*queryHandler.FindAllHandler)),
 
@@ -42,10 +48,12 @@ var WirePermission = wire.NewSet(
 	wire.Struct(new(fiber.CreateHandler), "*"),
 	wire.Struct(new(fiber.DeleteHandler), "*"),
 	wire.Struct(new(fiber.PermissionsHandler), "*"),
+	wire.Struct(new(hook.CreateBasePermissions), "*"),
 
 	model.NewGormPermissionRepo,
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormPermissionRepo)),
 	wire.Bind(new(commandHandler.DeleteWriteModel), new(*model.GormPermissionRepo)),
+	wire.Bind(new(commandHandler.VerifyPermissionNotExistsReadModel), new(*model.GormPermissionRepo)),
 	wire.Bind(new(queryHandler.FindAllReadModel), new(*model.GormPermissionRepo)),
 	wire.Bind(new(queryHandler.FindByNameReadModel), new(*model.GormPermissionRepo)),
 )

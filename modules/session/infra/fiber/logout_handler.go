@@ -27,12 +27,13 @@ func UseLogoutHandler(handler *LogoutHandler) {
 	logout.Delete("/", handler.delete)
 }
 
-//	@Summary	Revoke the current session
-//	@Produce	text/plain
-//	@Success	204
-//	@Failure	401
-//	@Router		/logout [delete]
-//	@Tags		Session
+// @Summary	Revoke the current session
+// @Produce	text/plain
+// @Success	204
+// @Failure	401
+// @Failure	500
+// @Router		/logout [delete]
+// @Tags		Session
 func (e *LogoutHandler) delete(ctx *fiber.Ctx) error {
 	sessionId := ctx.Locals("session_id").(domain.SessionId)
 

@@ -8,7 +8,7 @@ import (
 
 type User struct {
 	Id             UserId         `validate:"required"`
-	Profile        Profile        `validate:"required,dive"`
+	Profile        Profile        `validate:"required"`
 	HashedPassword HashedPassword `validate:"required"`
 	Permissions    []Permission   `validate:"required"`
 	CreatedAt      time.Time      `validate:"required"`
@@ -36,6 +36,16 @@ func CreateUser(
 
 func (u *User) MustHavePermission(permission Permission) error {
 	if !lo.Contains(u.Permissions, permission) {
+		return ErrUserDoesNotHavePermission
+	}
+	return nil
+}
+
+func (u *User) MustHavePermissionAkinTo(permission Permission) error {
+	_, found := lo.Find(u.Permissions, func(p Permission) bool {
+		return p.IsAkinTo(permission)
+	})
+	if !found {
 		return ErrUserDoesNotHavePermission
 	}
 	return nil

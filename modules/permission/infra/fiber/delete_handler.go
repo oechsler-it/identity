@@ -2,6 +2,7 @@ package fiber
 
 import (
 	"errors"
+	userFiber "github.com/oechsler-it/identity/modules/user/infra/fiber"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
@@ -16,26 +17,34 @@ type DeleteHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	ProtectMiddleware *sessionFiber.ProtectMiddleware
+	RenewMiddleware      *sessionFiber.RenewMiddleware
+	ProtectMiddleware    *sessionFiber.ProtectMiddleware
+	UserMiddleware       *userFiber.UserMiddleware
+	PermissionMiddleware *userFiber.PermissionMiddleware
 	// ---
 	Delete cqrs.CommandHandler[command.Delete]
 }
 
 func UseDeleteHandler(handler *DeleteHandler) {
-	delete := handler.Group("/permission")
-	delete.Use(handler.ProtectMiddleware.Handle)
-	delete.Delete("/:name", handler.delete)
+	del := handler.Group("/permission")
+	del.Delete("/:name",
+		handler.RenewMiddleware.Handle,
+		handler.ProtectMiddleware.Handle,
+		handler.UserMiddleware.Handle,
+		handler.PermissionMiddleware.Has("all:permission:del"),
+		handler.delete)
 }
 
-//	@Summary	Delete a permission
-//	@Accept		text/plain
-//	@Produce	text/plain
-//	@Param		name	path	string	true	"Name of the permission"
-//	@Success	204
-//	@Failure	401
-//	@Failure	404
-//	@Router		/permission/{name} [delete]
-//	@Tags		Permission
+// @Summary	Delete a permission
+// @Accept		text/plain
+// @Produce	text/plain
+// @Param		name	path	string	true	"Name of the permission"
+// @Success	204
+// @Failure	401
+// @Failure	404
+// @Failure	500
+// @Router		/permission/{name} [delete]
+// @Tags		Permission
 func (e *DeleteHandler) delete(ctx *fiber.Ctx) error {
 	name := ctx.Params("name")
 

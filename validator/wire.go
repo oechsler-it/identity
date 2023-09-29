@@ -5,6 +5,10 @@ import (
 	"github.com/google/wire"
 )
 
+func New() *validator.Validate {
+	return validator.New()
+}
+
 var WireValidator = wire.NewSet(
-	validator.New,
+	New,
 )
