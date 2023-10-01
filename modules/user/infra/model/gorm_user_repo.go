@@ -108,8 +108,6 @@ func (m *GormUserRepo) toModel(user *domain.User) GormUserModel {
 		Id:             uuid.UUID(user.Id).String(),
 		CreatedAt:      user.CreatedAt,
 		UpdatedAt:      user.UpdatedAt,
-		FirstName:      user.Profile.FirstName,
-		LastName:       user.Profile.LastName,
 		HashedPassword: string(user.HashedPassword),
 		Permissions: lo.Map(user.Permissions, func(permission domain.Permission, _ int) GormPermissionModel {
 			return GormPermissionModel{
@@ -129,10 +127,6 @@ func (m *GormUserRepo) toUser(model GormUserModel) (*domain.User, error) {
 		Id:        domain.UserId(id),
 		CreatedAt: model.CreatedAt,
 		UpdatedAt: model.UpdatedAt,
-		Profile: domain.Profile{
-			FirstName: model.FirstName,
-			LastName:  model.LastName,
-		},
 		Permissions: lo.Map(model.Permissions, func(permission GormPermissionModel, _ int) domain.Permission {
 			return domain.Permission(permission.Name)
 		}),

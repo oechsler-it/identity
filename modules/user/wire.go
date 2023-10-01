@@ -16,6 +16,9 @@ import (
 
 type Options struct {
 	CreateRootUser   *hook.CreateRootUser
+	CreateUser       *fiber.CreateUserHandler
+	Me               *fiber.MeHandler
+	UserById         *fiber.UserByIdHandler
 	GrantPermission  *fiber.GrantPermissionHandler
 	RevokePermission *fiber.RevokePermissionHandler
 	HasPermission    *fiber.HasPermissionHandler
@@ -23,6 +26,9 @@ type Options struct {
 
 func UseUser(opts *Options) {
 	hook.UseCreateRootUser(opts.CreateRootUser)
+	fiber.UseCreateUserHandler(opts.CreateUser)
+	fiber.UseMeHandler(opts.Me)
+	fiber.UseUserByIdHandler(opts.UserById)
 	fiber.UseGrantPermissionHandler(opts.GrantPermission)
 	fiber.UseRevokePermissionHandler(opts.RevokePermission)
 	fiber.UseHasPermissionHandler(opts.HasPermission)
@@ -53,6 +59,9 @@ var WireUser = wire.NewSet(
 	wire.Bind(new(cqrs.QueryHandler[query.FindByIdentifier, *domain.User]), new(*queryHandler.FindByIdentifierHandler)),
 
 	wire.Struct(new(hook.CreateRootUser), "*"),
+	wire.Struct(new(fiber.CreateUserHandler), "*"),
+	wire.Struct(new(fiber.MeHandler), "*"),
+	wire.Struct(new(fiber.UserByIdHandler), "*"),
 	wire.Struct(new(fiber.GrantPermissionHandler), "*"),
 	wire.Struct(new(fiber.RevokePermissionHandler), "*"),
 	wire.Struct(new(fiber.HasPermissionHandler), "*"),

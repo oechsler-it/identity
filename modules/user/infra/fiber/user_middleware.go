@@ -18,21 +18,21 @@ type UserMiddleware struct {
 func (e *UserMiddleware) Handle(ctx *fiber.Ctx) error {
 	sessionId, ok := ctx.Locals("session_id").(sessionDomain.SessionId)
 	if !ok {
-		return fiber.ErrForbidden
+		return ctx.Next()
 	}
 
 	session, err := e.FindSessionById.Handle(ctx.Context(), sessionQuery.FindById{
 		Id: sessionId,
 	})
 	if err != nil {
-		return fiber.ErrForbidden
+		return ctx.Next()
 	}
 
 	user, err := e.FindById.Handle(ctx.Context(), query.FindByIdentifier{
 		Identifier: uuid.UUID(session.OwnedBy.UserId).String(),
 	})
 	if err != nil {
-		return fiber.ErrForbidden
+		return ctx.Next()
 	}
 
 	ctx.Locals("user_id", user.Id)

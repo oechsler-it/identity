@@ -8,8 +8,6 @@ type GormUserModel struct {
 	Id             string `gorm:"primary_key"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-	FirstName      string
-	LastName       string
 	HashedPassword string
 	Permissions    []GormPermissionModel `gorm:"many2many:user_permissions;constraint:OnDelete:CASCADE;"`
 	Sessions       []GormSessionModel    `gorm:"foreignkey:OwnerUserId;"`

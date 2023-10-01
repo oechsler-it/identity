@@ -94,6 +94,29 @@ func New() *App {
 	permissionMiddleware := &fiber3.PermissionMiddleware{
 		VerifyHasPermission: verifyHasPermissionHandler,
 	}
+	createUserHandler := &fiber3.CreateUserHandler{
+		App:                  fiberApp,
+		Logger:               logger,
+		Validate:             validate,
+		RenewMiddleware:      renewMiddleware,
+		ProtectMiddleware:    protectMiddleware,
+		UserMiddleware:       userMiddleware,
+		PermissionMiddleware: permissionMiddleware,
+		Repo:                 gormUserRepo,
+		Create:               createHandler,
+	}
+	meHandler := &fiber3.MeHandler{
+		App:               fiberApp,
+		Logger:            logger,
+		RenewMiddleware:   renewMiddleware,
+		ProtectMiddleware: protectMiddleware,
+		UserMiddleware:    userMiddleware,
+	}
+	userByIdHandler := &fiber3.UserByIdHandler{
+		App:              fiberApp,
+		Logger:           logger,
+		FindByIdentifier: findByIdentifierHandler,
+	}
 	fiberGrantPermissionHandler := &fiber3.GrantPermissionHandler{
 		App:                  fiberApp,
 		Logger:               logger,
@@ -120,6 +143,9 @@ func New() *App {
 	}
 	userOptions := &user.Options{
 		CreateRootUser:   createRootUser,
+		CreateUser:       createUserHandler,
+		Me:               meHandler,
+		UserById:         userByIdHandler,
 		GrantPermission:  fiberGrantPermissionHandler,
 		RevokePermission: fiberRevokePermissionHandler,
 		HasPermission:    hasPermissionHandler,

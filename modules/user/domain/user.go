@@ -8,7 +8,6 @@ import (
 
 type User struct {
 	Id             UserId         `validate:"required"`
-	Profile        Profile        `validate:"required"`
 	HashedPassword HashedPassword `validate:"required"`
 	Permissions    []Permission   `validate:"required"`
 	CreatedAt      time.Time      `validate:"required"`
@@ -19,12 +18,10 @@ type User struct {
 
 func CreateUser(
 	id UserId,
-	profile Profile,
 	hashedPassword HashedPassword,
 ) *User {
 	return &User{
 		Id:             id,
-		Profile:        profile,
 		HashedPassword: hashedPassword,
 		Permissions:    []Permission{},
 		CreatedAt:      time.Now(),

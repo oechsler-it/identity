@@ -7,6 +7,12 @@ definitions:
       name:
         type: string
     type: object
+  fiber.createUserRequest:
+    properties:
+      password:
+        minLength: 8
+        type: string
+    type: object
   fiber.permissionResponse:
     properties:
       description:
@@ -29,6 +35,13 @@ definitions:
         type: string
       owned_by:
         $ref: '#/definitions/fiber.sessionOwner'
+    type: object
+  fiber.userResponse:
+    properties:
+      id:
+        type: string
+      registered_at:
+        type: string
     type: object
 info:
   contact: {}
@@ -225,6 +238,59 @@ paths:
       summary: Revoke a session
       tags:
       - Session
+  /user:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Information of the user to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/fiber.createUserRequest'
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "422":
+          description: Unprocessable Entity
+        "500":
+          description: Internal Server Error
+      summary: Create a new user
+      tags:
+      - User
+  /user/{id}:
+    get:
+      parameters:
+      - description: Id of the user
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/fiber.userResponse'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Get information about a user
+      tags:
+      - User
   /user/{id}/grant/{permission}:
     post:
       consumes:
@@ -318,6 +384,22 @@ paths:
         "500":
           description: Internal Server Error
       summary: Revoke a permission from a user
+      tags:
+      - User
+  /user/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/fiber.userResponse'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      summary: Get information about the current user
       tags:
       - User
 swagger: "2.0"

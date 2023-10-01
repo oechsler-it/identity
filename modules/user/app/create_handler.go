@@ -41,7 +41,6 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd command.Create) error {
 
 	user := domain.CreateUser(
 		cmd.Id,
-		cmd.Profile,
 		hashedPassword,
 	)
 

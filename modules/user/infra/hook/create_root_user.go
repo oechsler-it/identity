@@ -35,36 +35,25 @@ func (e *CreateRootUser) onStart(ctx context.Context) error {
 		return nil
 	}
 
-	cmd := command.Create{
-		Profile: domain.Profile{
-			FirstName: e.Env.String(
-				"INITIAL_USER_FIRST_NAME",
-				"Root",
-			),
-			LastName: e.Env.String(
-				"INITIAL_USER_LAST_NAME",
-				"User",
-			),
-		},
-		Password: domain.PlainPassword(e.Env.String(
-			"INITIAL_USER_PASSWORD",
-			"change-me",
-		)),
-	}
-
 	id, err := e.Repo.NextId(ctx)
-	if err == nil {
-		cmd.Id = id
-	} else {
+	if err != nil {
 		return err
 	}
 
-	if err := e.Create.Handle(ctx, cmd); err != nil {
+	password := domain.PlainPassword(e.Env.String(
+		"INITIAL_USER_PASSWORD",
+		"change-me",
+	))
+
+	if err := e.Create.Handle(ctx, command.Create{
+		Id:       id,
+		Password: password,
+	}); err != nil {
 		return err
 	}
 
 	e.Logger.WithField("id", uuid.UUID(id).String()).
-		WithField("password", cmd.Password).
+		WithField("password", password).
 		Info("Root user created")
 
 	go func() {
@@ -86,16 +75,16 @@ func (e *CreateRootUser) onStart(ctx context.Context) error {
 		}
 
 		if err := e.Grant.Handle(ctx, command.GrantPermission{
-			Id:         cmd.Id,
+			Id:         id,
 			Permission: domain.Permission(permission.Name),
 		}); err != nil {
 			e.Logger.WithError(err).
-				WithField("id", uuid.UUID(cmd.Id).String()).
+				WithField("id", uuid.UUID(id).String()).
 				WithField("permission", permission.Name).
 				Error("Failed to grant permission to root user")
 		}
 
-		e.Logger.WithField("id", uuid.UUID(cmd.Id).String()).
+		e.Logger.WithField("id", uuid.UUID(id).String()).
 			WithField("permission", permission.Name).
 			Info("Granted permission to root user")
 	}()
