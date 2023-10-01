@@ -8,7 +8,7 @@ import (
 
 type DeleteWriteModel interface {
 	Count(ctx context.Context) (int, error)
-	Delete(ctx context.Context, id domain.UserId) error
+	Delete(ctx context.Context, id domain.UserId, handler func(user *domain.User) error) error
 }
 
 type DeleteHandler struct {
@@ -22,12 +22,14 @@ func NewDeleteHandler(writeModel DeleteWriteModel) *DeleteHandler {
 }
 
 func (h *DeleteHandler) Handle(ctx context.Context, cmd command.Delete) error {
-	count, err := h.writeModel.Count(ctx)
-	if err != nil {
-		return err
-	}
-	if count == 1 {
-		return domain.ErrCanNotDeleteLastUser
-	}
-	return h.writeModel.Delete(ctx, cmd.Id)
+	return h.writeModel.Delete(ctx, cmd.Id, func(user *domain.User) error {
+		count, err := h.writeModel.Count(ctx)
+		if err != nil {
+			return err
+		}
+		if count == 1 {
+			return domain.ErrCanNotDeleteLastUser
+		}
+		return nil
+	})
 }

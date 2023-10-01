@@ -7,7 +7,8 @@ type GormPermissionModel struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	Description string
-	Users       []GormUserModel `gorm:"many2many:user_permissions;constraint:OnDelete:CASCADE;"`
+	Users       []GormUserModel  `gorm:"many2many:user_permissions;constraint:OnDelete:CASCADE;"`
+	Tokens      []GormTokenModel `gorm:"many2many:token_permissions;constraint:OnDelete:CASCADE;"`
 }
 
 func (GormPermissionModel) TableName() string {
@@ -20,4 +21,12 @@ type GormUserModel struct {
 
 func (GormUserModel) TableName() string {
 	return "users"
+}
+
+type GormTokenModel struct {
+	Id string `gorm:"primary_key"`
+}
+
+func (GormTokenModel) TableName() string {
+	return "tokens"
 }

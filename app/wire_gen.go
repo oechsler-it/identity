@@ -19,6 +19,8 @@ import (
 	app3 "github.com/oechsler-it/identity/modules/session/app"
 	fiber2 "github.com/oechsler-it/identity/modules/session/infra/fiber"
 	model3 "github.com/oechsler-it/identity/modules/session/infra/model"
+	"github.com/oechsler-it/identity/modules/token"
+	model4 "github.com/oechsler-it/identity/modules/token/infra/model"
 	"github.com/oechsler-it/identity/modules/user"
 	"github.com/oechsler-it/identity/modules/user/app"
 	fiber3 "github.com/oechsler-it/identity/modules/user/infra/fiber"
@@ -273,11 +275,16 @@ func New() *App {
 		DeleteHandler:         fiberDeleteHandler,
 		PermissionsHandler:    permissionsHandler,
 	}
+	gormTokenRepo := model4.NewGormTokenRepo(db, logger, hooks)
+	tokenOptions := &token.Options{
+		Repo: gormTokenRepo,
+	}
 	modulesOptions := &modules.Options{
 		App:        fiberApp,
 		User:       userOptions,
 		Session:    sessionOptions,
 		Permission: permissionOptions,
+		Token:      tokenOptions,
 	}
 	appOptions := &Options{
 		Runtime: runtimeRuntime,

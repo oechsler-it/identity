@@ -20,10 +20,7 @@ func (GormSessionModel) TableName() string {
 }
 
 type GormUserModel struct {
-	Id             string `gorm:"primary_key"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	HashedPassword string
+	Id string `gorm:"primary_key"`
 }
 
 func (GormUserModel) TableName() string {

@@ -11,6 +11,7 @@ type GormUserModel struct {
 	HashedPassword string
 	Permissions    []GormPermissionModel `gorm:"many2many:user_permissions;constraint:OnDelete:CASCADE;"`
 	Sessions       []GormSessionModel    `gorm:"foreignkey:OwnerUserId;"`
+	Tokens         []GormTokenModel      `gorm:"foreignkey:OwnerUserId;"`
 }
 
 func (GormUserModel) TableName() string {
@@ -32,4 +33,13 @@ type GormSessionModel struct {
 
 func (GormSessionModel) TableName() string {
 	return "sessions"
+}
+
+type GormTokenModel struct {
+	Id          string `gorm:"primary_key"`
+	OwnerUserId string
+}
+
+func (GormTokenModel) TableName() string {
+	return "tokens"
 }
