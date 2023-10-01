@@ -85,6 +85,15 @@ func (m *GormUserRepo) Update(ctx context.Context, id domain.UserId, handler fun
 	return m.database.Save(&model).Error
 }
 
+func (m *GormUserRepo) Delete(ctx context.Context, id domain.UserId) error {
+	user, err := m.FindById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return m.database.Delete(&GormUserModel{}, "id = ?", uuid.UUID(user.Id).String()).Error
+}
+
 func (m *GormUserRepo) Revoke(ctx context.Context, id domain.UserId, handler func(user *domain.User) error) error {
 	user, err := m.FindById(ctx, id)
 	if err != nil {

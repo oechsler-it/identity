@@ -17,6 +17,8 @@ import (
 type Options struct {
 	CreateRootUser   *hook.CreateRootUser
 	CreateUser       *fiber.CreateUserHandler
+	DeleteMe         *fiber.DeleteMeHandler
+	DeleteUser       *fiber.DeleteUserHandler
 	Me               *fiber.MeHandler
 	UserById         *fiber.UserByIdHandler
 	GrantPermission  *fiber.GrantPermissionHandler
@@ -27,6 +29,8 @@ type Options struct {
 func UseUser(opts *Options) {
 	hook.UseCreateRootUser(opts.CreateRootUser)
 	fiber.UseCreateUserHandler(opts.CreateUser)
+	fiber.UseDeleteMeHandler(opts.DeleteMe)
+	fiber.UseDeleteUserHandler(opts.DeleteUser)
 	fiber.UseMeHandler(opts.Me)
 	fiber.UseUserByIdHandler(opts.UserById)
 	fiber.UseGrantPermissionHandler(opts.GrantPermission)
@@ -39,6 +43,9 @@ var WireUser = wire.NewSet(
 
 	commandHandler.NewCreateHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.Create]), new(*commandHandler.CreateHandler)),
+
+	commandHandler.NewDeleteHandler,
+	wire.Bind(new(cqrs.CommandHandler[command.Delete]), new(*commandHandler.DeleteHandler)),
 
 	commandHandler.NewVerifyPasswordHandler,
 	wire.Bind(new(cqrs.CommandHandler[command.VerifyPassword]), new(*commandHandler.VerifyPasswordHandler)),
@@ -60,6 +67,8 @@ var WireUser = wire.NewSet(
 
 	wire.Struct(new(hook.CreateRootUser), "*"),
 	wire.Struct(new(fiber.CreateUserHandler), "*"),
+	wire.Struct(new(fiber.DeleteUserHandler), "*"),
+	wire.Struct(new(fiber.DeleteMeHandler), "*"),
 	wire.Struct(new(fiber.MeHandler), "*"),
 	wire.Struct(new(fiber.UserByIdHandler), "*"),
 	wire.Struct(new(fiber.GrantPermissionHandler), "*"),
@@ -70,6 +79,7 @@ var WireUser = wire.NewSet(
 
 	model.NewGormUserRepo,
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormUserRepo)),
+	wire.Bind(new(commandHandler.DeleteWriteModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.VerifyPasswordReadModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.VerifyNoUserExistsRedModel), new(*model.GormUserRepo)),
 	wire.Bind(new(commandHandler.GrantPermissionWriteModel), new(*model.GormUserRepo)),

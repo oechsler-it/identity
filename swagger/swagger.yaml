@@ -268,6 +268,29 @@ paths:
       tags:
       - User
   /user/{id}:
+    delete:
+      parameters:
+      - description: Id of the user
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: Delete a user
+      tags:
+      - User
     get:
       parameters:
       - description: Id of the user
@@ -387,6 +410,21 @@ paths:
       tags:
       - User
   /user/me:
+    delete:
+      produces:
+      - text/plain
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "500":
+          description: Internal Server Error
+      summary: Delete the current user
+      tags:
+      - User
     get:
       produces:
       - application/json

@@ -105,6 +105,24 @@ func New() *App {
 		Repo:                 gormUserRepo,
 		Create:               createHandler,
 	}
+	deleteHandler := app.NewDeleteHandler(gormUserRepo)
+	deleteMeHandler := &fiber3.DeleteMeHandler{
+		App:               fiberApp,
+		Logger:            logger,
+		RenewMiddleware:   renewMiddleware,
+		ProtectMiddleware: protectMiddleware,
+		UserMiddleware:    userMiddleware,
+		Delete:            deleteHandler,
+	}
+	deleteUserHandler := &fiber3.DeleteUserHandler{
+		App:                  fiberApp,
+		Logger:               logger,
+		RenewMiddleware:      renewMiddleware,
+		ProtectMiddleware:    protectMiddleware,
+		UserMiddleware:       userMiddleware,
+		PermissionMiddleware: permissionMiddleware,
+		Delete:               deleteHandler,
+	}
 	meHandler := &fiber3.MeHandler{
 		App:               fiberApp,
 		Logger:            logger,
@@ -144,6 +162,8 @@ func New() *App {
 	userOptions := &user.Options{
 		CreateRootUser:   createRootUser,
 		CreateUser:       createUserHandler,
+		DeleteMe:         deleteMeHandler,
+		DeleteUser:       deleteUserHandler,
 		Me:               meHandler,
 		UserById:         userByIdHandler,
 		GrantPermission:  fiberGrantPermissionHandler,
@@ -232,7 +252,7 @@ func New() *App {
 		PermissionMiddleware: permissionMiddleware,
 		Create:               appCreateHandler,
 	}
-	deleteHandler := app2.NewDeleteHandler(gormPermissionRepo)
+	appDeleteHandler := app2.NewDeleteHandler(gormPermissionRepo)
 	fiberDeleteHandler := &fiber4.DeleteHandler{
 		App:                  fiberApp,
 		Logger:               logger,
@@ -240,7 +260,7 @@ func New() *App {
 		ProtectMiddleware:    protectMiddleware,
 		UserMiddleware:       userMiddleware,
 		PermissionMiddleware: permissionMiddleware,
-		Delete:               deleteHandler,
+		Delete:               appDeleteHandler,
 	}
 	findAllHandler := app2.NewFindAllHandler(gormPermissionRepo)
 	permissionsHandler := &fiber4.PermissionsHandler{

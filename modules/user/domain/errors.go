@@ -9,4 +9,5 @@ var (
 	ErrAUserExists               = errors.New("a user exists")
 	ErrUserDoesNotHavePermission = errors.New("user does not have permission")
 	ErrUserAlreadyHasPermission  = errors.New("user already has permission")
+	ErrCanNotDeleteLastUser      = errors.New("can not delete last user")
 )

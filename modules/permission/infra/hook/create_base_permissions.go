@@ -26,6 +26,7 @@ func UseCreateBasePermissions(hook *CreateBasePermissions) {
 	hook.OnStart(hook.allPermissionDelete)
 	hook.OnStart(hook.allUser)
 	hook.OnStart(hook.allUserCreate)
+	hook.OnStart(hook.allUserDelete)
 	hook.OnStart(hook.allUserPermission)
 	hook.OnStart(hook.allUserPermissionGrant)
 	hook.OnStart(hook.allUserPermissionRevoke)
@@ -73,6 +74,10 @@ func (e *CreateBasePermissions) allUser(ctx context.Context) error {
 
 func (e *CreateBasePermissions) allUserCreate(ctx context.Context) error {
 	return e.ensureCreated(ctx, "all:user:create", "Create new users")
+}
+
+func (e *CreateBasePermissions) allUserDelete(ctx context.Context) error {
+	return e.ensureCreated(ctx, "all:user:delete", "Delete users")
 }
 
 func (e *CreateBasePermissions) allUserPermission(ctx context.Context) error {
