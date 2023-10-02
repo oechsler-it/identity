@@ -20,9 +20,9 @@ type RevokePermissionHandler struct {
 	Logger *logrus.Logger
 	// ---
 	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectMiddleware
+	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
 	UserMiddleware       *UserMiddleware
-	PermissionMiddleware *PermissionMiddleware
+	PermissionMiddleware *UserPermissionMiddleware
 	// ---
 	Revoke cqrs.CommandHandler[command.RevokePermission]
 }

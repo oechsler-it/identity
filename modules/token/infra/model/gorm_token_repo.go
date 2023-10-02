@@ -38,7 +38,7 @@ func NewGormTokenRepo(
 }
 
 func (m *GormTokenRepo) NextId(_ context.Context) (domain.TokenId, error) {
-	value := make([]byte, 64)
+	value := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, value); err != nil {
 		return "", err
 	}
@@ -126,7 +126,7 @@ func (m *GormTokenRepo) toToken(model GormTokenModel) (*domain.Token, error) {
 		CreatedAt:   model.CreatedAt,
 		UpdatedAt:   model.UpdatedAt,
 		Description: model.Description,
-		Owner: domain.Owner{
+		OwnedBy: domain.Owner{
 			UserId: domain.UserId(userId),
 		},
 		Permissions: lo.Map(model.Permissions, func(model GormPermissionModel, _ int) domain.Permission {
@@ -142,7 +142,7 @@ func (m *GormTokenRepo) toModel(token *domain.Token) GormTokenModel {
 		CreatedAt:   token.CreatedAt,
 		UpdatedAt:   token.UpdatedAt,
 		Description: token.Description,
-		OwnerUserId: uuid.UUID(token.Owner.UserId).String(),
+		OwnerUserId: uuid.UUID(token.OwnedBy.UserId).String(),
 		Permissions: lo.Map(token.Permissions, func(permission domain.Permission, _ int) GormPermissionModel {
 			return GormPermissionModel{
 				Name: string(permission),

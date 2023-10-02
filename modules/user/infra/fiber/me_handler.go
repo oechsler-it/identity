@@ -14,7 +14,7 @@ type MeHandler struct {
 	Logger *logrus.Logger
 	// ---
 	RenewMiddleware   *sessionFiber.RenewMiddleware
-	ProtectMiddleware *sessionFiber.ProtectMiddleware
+	ProtectMiddleware *sessionFiber.ProtectSessionMiddleware
 	UserMiddleware    *UserMiddleware
 }
 

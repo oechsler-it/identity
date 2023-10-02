@@ -14,7 +14,7 @@ import (
 
 type Options struct {
 	DeviceIdMiddleware    *fiber.DeviceIdMiddleware
-	SessionIdMiddleware   *fiber.SessionIdMiddleware
+	SessionIdMiddleware   *fiber.SessionMiddleware
 	LoginHandler          *fiber.LoginHandler
 	LogoutHandler         *fiber.LogoutHandler
 	RevokeSessionHandler  *fiber.RevokeSessionHandler
@@ -25,7 +25,7 @@ type Options struct {
 
 func UseSession(opts *Options) {
 	fiber.UseDeviceIdMiddleware(opts.DeviceIdMiddleware)
-	fiber.UseSessionIdMiddleware(opts.SessionIdMiddleware)
+	fiber.UseSessionMiddleware(opts.SessionIdMiddleware)
 	fiber.UseLoginHandler(opts.LoginHandler)
 	fiber.UseLogoutHandler(opts.LogoutHandler)
 	fiber.UseRevokeSessionHandler(opts.RevokeSessionHandler)
@@ -56,9 +56,9 @@ var WireSession = wire.NewSet(
 	wire.Bind(new(cqrs.QueryHandler[query.FindById, *domain.Session]), new(*queryHandler.FindByIdHandler)),
 
 	wire.Struct(new(fiber.DeviceIdMiddleware), "*"),
-	wire.Struct(new(fiber.SessionIdMiddleware), "*"),
+	wire.Struct(new(fiber.SessionMiddleware), "*"),
 	wire.Struct(new(fiber.RenewMiddleware), "*"),
-	wire.Struct(new(fiber.ProtectMiddleware), "*"),
+	wire.Struct(new(fiber.ProtectSessionMiddleware), "*"),
 	wire.Struct(new(fiber.LoginHandler), "*"),
 	wire.Struct(new(fiber.LogoutHandler), "*"),
 	wire.Struct(new(fiber.RevokeSessionHandler), "*"),

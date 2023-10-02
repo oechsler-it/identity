@@ -24,7 +24,7 @@ type ActiveSessionHandler struct {
 	*fiber.App
 	// ---
 	RenewMiddleware   *RenewMiddleware
-	ProtectMiddleware *ProtectMiddleware
+	ProtectMiddleware *ProtectSessionMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 }

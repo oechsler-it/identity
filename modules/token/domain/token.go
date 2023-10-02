@@ -10,7 +10,7 @@ type Token struct {
 	CreatedAt   time.Time    `validate:"required"`
 	UpdatedAt   time.Time    `validate:"required"`
 	Description string       `validate:"required"`
-	Owner       Owner        `validate:"required"`
+	OwnedBy     Owner        `validate:"required"`
 	Permissions []Permission `validate:"required"`
 	ExpiresAt   *time.Time
 }
@@ -25,23 +25,31 @@ func (t *Token) MustNotBeExpired() error {
 }
 
 func (t *Token) MustHavePermission(permission Permission) error {
-	if !lo.Contains(t.Permissions, permission) {
+	if !t.HasPermission(permission) {
 		return ErrTokenDoesNotHavePermission
 	}
 	return nil
 }
 
 func (t *Token) MustHavePermissionAkinTo(permission Permission) error {
-	_, found := lo.Find(t.Permissions, func(p Permission) bool {
-		return p.IsAkinTo(permission)
-	})
-	if !found {
+	if !t.HasPermissionAkinTo(permission) {
 		return ErrTokenDoesNotHavePermission
 	}
 	return nil
 }
 
 // Getters
+
+func (t *Token) HasPermission(permission Permission) bool {
+	return lo.Contains(t.Permissions, permission)
+}
+
+func (t *Token) HasPermissionAkinTo(permission Permission) bool {
+	_, found := lo.Find(t.Permissions, func(p Permission) bool {
+		return p.IsAkinTo(permission)
+	})
+	return found
+}
 
 func (t *Token) IsActive() bool {
 	return t.ExpiresAt == nil || time.Now().Before(*t.ExpiresAt)
@@ -61,7 +69,7 @@ func IssueToken(
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		Description: description,
-		Owner:       ownedBy,
+		OwnedBy:     ownedBy,
 		Permissions: permissions,
 		ExpiresAt:   expiresAt,
 	}

@@ -18,9 +18,9 @@ type DeleteHandler struct {
 	Logger *logrus.Logger
 	// ---
 	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectMiddleware
+	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
 	UserMiddleware       *userFiber.UserMiddleware
-	PermissionMiddleware *userFiber.PermissionMiddleware
+	PermissionMiddleware *userFiber.UserPermissionMiddleware
 	// ---
 	Delete cqrs.CommandHandler[command.Delete]
 }

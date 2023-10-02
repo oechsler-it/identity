@@ -18,7 +18,7 @@ type RevokeSessionHandler struct {
 	Logger *logrus.Logger
 	// ---
 	RenewMiddleware   *RenewMiddleware
-	ProtectMiddleware *ProtectMiddleware
+	ProtectMiddleware *ProtectSessionMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 	Revoke   cqrs.CommandHandler[command.Revoke]

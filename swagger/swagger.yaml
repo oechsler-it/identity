@@ -13,6 +13,28 @@ definitions:
         minLength: 8
         type: string
     type: object
+  fiber.issueTokenRequest:
+    properties:
+      description:
+        type: string
+      lifetime_in_seconds:
+        type: integer
+      permissions:
+        items:
+          type: string
+        type: array
+    required:
+    - description
+    type: object
+  fiber.issueTokenResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
+        type: string
+      type:
+        type: string
+    type: object
   fiber.permissionResponse:
     properties:
       description:
@@ -238,6 +260,37 @@ paths:
       summary: Revoke a session
       tags:
       - Session
+  /token:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Information of the token to issue
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/fiber.issueTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/fiber.issueTokenResponse'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "422":
+          description: Unprocessable Entity
+        "500":
+          description: Internal Server Error
+      summary: Issue a new token
+      tags:
+      - Token
   /user:
     post:
       consumes:

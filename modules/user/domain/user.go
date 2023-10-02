@@ -14,7 +14,43 @@ type User struct {
 	UpdatedAt      time.Time      `validate:"required"`
 }
 
-// ---
+// Assertions
+
+func (u *User) MustHavePermission(permission Permission) error {
+	if !u.HasPermission(permission) {
+		return ErrUserDoesNotHavePermission
+	}
+	return nil
+}
+
+func (u *User) MustHavePermissionAkinTo(permission Permission) error {
+	if !u.HasPermissionAkinTo(permission) {
+		return ErrUserDoesNotHavePermission
+	}
+	return nil
+}
+
+func (u *User) MustNotHavePermission(permission Permission) error {
+	if !u.HasPermission(permission) {
+		return ErrUserAlreadyHasPermission
+	}
+	return nil
+}
+
+// Getters
+
+func (u *User) HasPermission(permission Permission) bool {
+	return lo.Contains(u.Permissions, permission)
+}
+
+func (u *User) HasPermissionAkinTo(permission Permission) bool {
+	_, found := lo.Find(u.Permissions, func(p Permission) bool {
+		return p.IsAkinTo(permission)
+	})
+	return found
+}
+
+// Actions
 
 func CreateUser(
 	id UserId,
@@ -28,34 +64,6 @@ func CreateUser(
 		UpdatedAt:      time.Now(),
 	}
 }
-
-// Assertions
-
-func (u *User) MustHavePermission(permission Permission) error {
-	if !lo.Contains(u.Permissions, permission) {
-		return ErrUserDoesNotHavePermission
-	}
-	return nil
-}
-
-func (u *User) MustHavePermissionAkinTo(permission Permission) error {
-	_, found := lo.Find(u.Permissions, func(p Permission) bool {
-		return p.IsAkinTo(permission)
-	})
-	if !found {
-		return ErrUserDoesNotHavePermission
-	}
-	return nil
-}
-
-func (u *User) MustNotHavePermission(permission Permission) error {
-	if lo.Contains(u.Permissions, permission) {
-		return ErrUserAlreadyHasPermission
-	}
-	return nil
-}
-
-// Actions
 
 func (u *User) GrantPermission(permission Permission) error {
 	if err := u.MustNotHavePermission(permission); err != nil {

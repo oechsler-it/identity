@@ -15,7 +15,7 @@ type LogoutHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	ProtectMiddleware *ProtectMiddleware
+	ProtectMiddleware *ProtectSessionMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 	Revoke   cqrs.CommandHandler[command.Revoke]

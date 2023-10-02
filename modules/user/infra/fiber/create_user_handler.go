@@ -24,9 +24,9 @@ type CreateUserHandler struct {
 	Validate *validator.Validate
 	// ---
 	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectMiddleware
+	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
 	UserMiddleware       *UserMiddleware
-	PermissionMiddleware *PermissionMiddleware
+	PermissionMiddleware *UserPermissionMiddleware
 	// ---
 	Repo   *model.GormUserRepo
 	Create cqrs.CommandHandler[command.Create]

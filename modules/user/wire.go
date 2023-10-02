@@ -75,7 +75,7 @@ var WireUser = wire.NewSet(
 	wire.Struct(new(fiber.RevokePermissionHandler), "*"),
 	wire.Struct(new(fiber.HasPermissionHandler), "*"),
 	wire.Struct(new(fiber.UserMiddleware), "*"),
-	wire.Struct(new(fiber.PermissionMiddleware), "*"),
+	wire.Struct(new(fiber.UserPermissionMiddleware), "*"),
 
 	model.NewGormUserRepo,
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormUserRepo)),

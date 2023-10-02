@@ -23,9 +23,9 @@ type CreateHandler struct {
 	Logger *logrus.Logger
 	// ---
 	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectMiddleware
+	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
 	UserMiddleware       *userFiber.UserMiddleware
-	PermissionMiddleware *userFiber.PermissionMiddleware
+	PermissionMiddleware *userFiber.UserPermissionMiddleware
 	// ---
 	Create cqrs.CommandHandler[command.Create]
 }

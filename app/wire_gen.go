@@ -20,6 +20,8 @@ import (
 	fiber2 "github.com/oechsler-it/identity/modules/session/infra/fiber"
 	model3 "github.com/oechsler-it/identity/modules/session/infra/model"
 	"github.com/oechsler-it/identity/modules/token"
+	app4 "github.com/oechsler-it/identity/modules/token/app"
+	fiber5 "github.com/oechsler-it/identity/modules/token/infra/fiber"
 	model4 "github.com/oechsler-it/identity/modules/token/infra/model"
 	"github.com/oechsler-it/identity/modules/user"
 	"github.com/oechsler-it/identity/modules/user/app"
@@ -83,27 +85,22 @@ func New() *App {
 		Renew:  renewHandler,
 	}
 	verifyActiveHandler := app3.NewVerifyActiveHandler(gormSessionRepo)
-	protectMiddleware := &fiber2.ProtectMiddleware{
+	protectSessionMiddleware := &fiber2.ProtectSessionMiddleware{
 		VerifyActive: verifyActiveHandler,
 	}
-	findByIdHandler := app3.NewFindByIdHandler(gormSessionRepo)
 	findByIdentifierHandler := app.NewFindByIdentifierHandler(gormUserRepo)
 	userMiddleware := &fiber3.UserMiddleware{
-		FindSessionById: findByIdHandler,
-		FindById:        findByIdentifierHandler,
+		FindById: findByIdentifierHandler,
 	}
-	verifyHasPermissionHandler := app.NewVerifyHasPermissionHandler(gormUserRepo)
-	permissionMiddleware := &fiber3.PermissionMiddleware{
-		VerifyHasPermission: verifyHasPermissionHandler,
-	}
+	userPermissionMiddleware := &fiber3.UserPermissionMiddleware{}
 	createUserHandler := &fiber3.CreateUserHandler{
 		App:                  fiberApp,
 		Logger:               logger,
 		Validate:             validate,
 		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectMiddleware,
+		ProtectMiddleware:    protectSessionMiddleware,
 		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: permissionMiddleware,
+		PermissionMiddleware: userPermissionMiddleware,
 		Repo:                 gormUserRepo,
 		Create:               createHandler,
 	}
@@ -112,7 +109,7 @@ func New() *App {
 		App:               fiberApp,
 		Logger:            logger,
 		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectMiddleware,
+		ProtectMiddleware: protectSessionMiddleware,
 		UserMiddleware:    userMiddleware,
 		Delete:            deleteHandler,
 	}
@@ -120,16 +117,16 @@ func New() *App {
 		App:                  fiberApp,
 		Logger:               logger,
 		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectMiddleware,
+		ProtectMiddleware:    protectSessionMiddleware,
 		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: permissionMiddleware,
+		PermissionMiddleware: userPermissionMiddleware,
 		Delete:               deleteHandler,
 	}
 	meHandler := &fiber3.MeHandler{
 		App:               fiberApp,
 		Logger:            logger,
 		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectMiddleware,
+		ProtectMiddleware: protectSessionMiddleware,
 		UserMiddleware:    userMiddleware,
 	}
 	userByIdHandler := &fiber3.UserByIdHandler{
@@ -141,9 +138,9 @@ func New() *App {
 		App:                  fiberApp,
 		Logger:               logger,
 		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectMiddleware,
+		ProtectMiddleware:    protectSessionMiddleware,
 		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: permissionMiddleware,
+		PermissionMiddleware: userPermissionMiddleware,
 		Grant:                grantPermissionHandler,
 	}
 	revokePermissionHandler := app.NewRevokePermissionHandler(validate, gormUserRepo)
@@ -151,11 +148,12 @@ func New() *App {
 		App:                  fiberApp,
 		Logger:               logger,
 		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectMiddleware,
+		ProtectMiddleware:    protectSessionMiddleware,
 		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: permissionMiddleware,
+		PermissionMiddleware: userPermissionMiddleware,
 		Revoke:               revokePermissionHandler,
 	}
+	verifyHasPermissionHandler := app.NewVerifyHasPermissionHandler(gormUserRepo)
 	hasPermissionHandler := &fiber3.HasPermissionHandler{
 		App:    fiberApp,
 		Logger: logger,
@@ -176,8 +174,10 @@ func New() *App {
 		App:    fiberApp,
 		Logger: logger,
 	}
-	sessionIdMiddleware := &fiber2.SessionIdMiddleware{
-		App: fiberApp,
+	findByIdHandler := app3.NewFindByIdHandler(gormSessionRepo)
+	sessionMiddleware := &fiber2.SessionMiddleware{
+		App:      fiberApp,
+		FindById: findByIdHandler,
 	}
 	initiateHandler := app3.NewInitiateHandler(validate, gormSessionRepo)
 	verifyPasswordHandler := app.NewVerifyPasswordHandler(argon2idPasswordService, gormUserRepo)
@@ -194,7 +194,7 @@ func New() *App {
 	logoutHandler := &fiber2.LogoutHandler{
 		App:               fiberApp,
 		Logger:            logger,
-		ProtectMiddleware: protectMiddleware,
+		ProtectMiddleware: protectSessionMiddleware,
 		FindById:          findByIdHandler,
 		Revoke:            revokeHandler,
 	}
@@ -202,7 +202,7 @@ func New() *App {
 		App:               fiberApp,
 		Logger:            logger,
 		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectMiddleware,
+		ProtectMiddleware: protectSessionMiddleware,
 		FindById:          findByIdHandler,
 		Revoke:            revokeHandler,
 	}
@@ -210,25 +210,25 @@ func New() *App {
 	activeSessionsHandler := &fiber2.ActiveSessionsHandler{
 		App:               fiberApp,
 		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectMiddleware,
+		ProtectMiddleware: protectSessionMiddleware,
 		FindById:          findByIdHandler,
 		FindByOwnerUserId: findByOwnerUserIdHandler,
 	}
 	activeSessionHandler := &fiber2.ActiveSessionHandler{
 		App:               fiberApp,
 		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectMiddleware,
+		ProtectMiddleware: protectSessionMiddleware,
 		FindById:          findByIdHandler,
 	}
 	sessionByIdHandler := &fiber2.SessionByIdHandler{
 		App:               fiberApp,
 		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectMiddleware,
+		ProtectMiddleware: protectSessionMiddleware,
 		FindById:          findByIdHandler,
 	}
 	sessionOptions := &session.Options{
 		DeviceIdMiddleware:    deviceIdMiddleware,
-		SessionIdMiddleware:   sessionIdMiddleware,
+		SessionIdMiddleware:   sessionMiddleware,
 		LoginHandler:          loginHandler,
 		LogoutHandler:         logoutHandler,
 		RevokeSessionHandler:  revokeSessionHandler,
@@ -249,9 +249,9 @@ func New() *App {
 		App:                  fiberApp,
 		Logger:               logger,
 		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectMiddleware,
+		ProtectMiddleware:    protectSessionMiddleware,
 		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: permissionMiddleware,
+		PermissionMiddleware: userPermissionMiddleware,
 		Create:               appCreateHandler,
 	}
 	appDeleteHandler := app2.NewDeleteHandler(gormPermissionRepo)
@@ -259,9 +259,9 @@ func New() *App {
 		App:                  fiberApp,
 		Logger:               logger,
 		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectMiddleware,
+		ProtectMiddleware:    protectSessionMiddleware,
 		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: permissionMiddleware,
+		PermissionMiddleware: userPermissionMiddleware,
 		Delete:               appDeleteHandler,
 	}
 	findAllHandler := app2.NewFindAllHandler(gormPermissionRepo)
@@ -276,8 +276,27 @@ func New() *App {
 		PermissionsHandler:    permissionsHandler,
 	}
 	gormTokenRepo := model4.NewGormTokenRepo(db, logger, hooks)
+	issueHandler := app4.NewIssueTokenHandler(validate, gormTokenRepo)
+	issueTokenHandler := &fiber5.IssueTokenHandler{
+		App:                  fiberApp,
+		Logger:               logger,
+		Validate:             validate,
+		Env:                  env,
+		RenewMiddleware:      renewMiddleware,
+		ProtectMiddleware:    protectSessionMiddleware,
+		UserMiddleware:       userMiddleware,
+		PermissionMiddleware: userPermissionMiddleware,
+		Repo:                 gormTokenRepo,
+		Issue:                issueHandler,
+	}
+	appFindByIdHandler := app4.NewFindByIdHandler(gormTokenRepo)
+	tokenIdMiddleware := &fiber5.TokenIdMiddleware{
+		App:      fiberApp,
+		FindById: appFindByIdHandler,
+	}
 	tokenOptions := &token.Options{
-		Repo: gormTokenRepo,
+		IssueTokenHandler: issueTokenHandler,
+		TokenIdMiddleware: tokenIdMiddleware,
 	}
 	modulesOptions := &modules.Options{
 		App:        fiberApp,

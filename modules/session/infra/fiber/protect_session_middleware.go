@@ -7,11 +7,15 @@ import (
 	"github.com/oechsler-it/identity/modules/session/domain"
 )
 
-type ProtectMiddleware struct {
+type ProtectSessionMiddleware struct {
 	VerifyActive cqrs.CommandHandler[command.VerifyActive]
 }
 
-func (e *ProtectMiddleware) Handle(ctx *fiber.Ctx) error {
+func (e *ProtectSessionMiddleware) Handle(ctx *fiber.Ctx) error {
+	if _, ok := ctx.Locals("authenticated").(struct{}); ok {
+		return ctx.Next()
+	}
+
 	sessionId, ok := ctx.Locals("session_id").(domain.SessionId)
 	if !ok {
 		return fiber.ErrUnauthorized
@@ -28,6 +32,8 @@ func (e *ProtectMiddleware) Handle(ctx *fiber.Ctx) error {
 	}); err != nil {
 		return fiber.ErrUnauthorized
 	}
+
+	ctx.Locals("authenticated", struct{}{})
 
 	return ctx.Next()
 }
