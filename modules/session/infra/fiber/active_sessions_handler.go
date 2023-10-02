@@ -14,8 +14,8 @@ type sessionsHandlerResponses []sessionResponse
 type ActiveSessionsHandler struct {
 	*fiber.App
 	// ---
-	RenewMiddleware   *RenewMiddleware
-	ProtectMiddleware *ProtectSessionMiddleware
+	RenewMiddleware          *RenewMiddleware
+	ProtectSessionMiddleware *ProtectSessionMiddleware
 	// ---
 	FindById          cqrs.QueryHandler[query.FindById, *domain.Session]
 	FindByOwnerUserId cqrs.QueryHandler[query.FindByOwnerUserId, []*domain.Session]
@@ -23,9 +23,10 @@ type ActiveSessionsHandler struct {
 
 func UseActiveSessionsHandler(handler *ActiveSessionsHandler) {
 	session := handler.Group("/session")
-	session.Use(handler.RenewMiddleware.Handle)
-	session.Use(handler.ProtectMiddleware.Handle)
-	session.Get("/", handler.get)
+	session.Get("/",
+		handler.RenewMiddleware.Handle,
+		handler.ProtectSessionMiddleware.Handle,
+		handler.get)
 }
 
 // @Summary	List all active sessions belonging to the owner of the current session
@@ -36,28 +37,17 @@ func UseActiveSessionsHandler(handler *ActiveSessionsHandler) {
 // @Router		/session [get]
 // @Tags		Session
 func (e *ActiveSessionsHandler) get(ctx *fiber.Ctx) error {
-	sessionIdCookie := ctx.Cookies("session_id")
-
-	sessionId, err := uuid.FromString(sessionIdCookie)
-	if err != nil {
-		return err
-	}
-
-	session, err := e.FindById.Handle(ctx.Context(), query.FindById{
-		Id: domain.SessionId(sessionId),
-	})
-	if err != nil {
-		return err
+	activeSession, ok := ctx.Locals("session").(*domain.Session)
+	if !ok {
+		return fiber.ErrInternalServerError
 	}
 
 	sessions, err := e.FindByOwnerUserId.Handle(ctx.Context(), query.FindByOwnerUserId{
-		UserId: session.OwnedBy.UserId,
+		UserId: activeSession.OwnedBy.UserId,
 	})
 	if err != nil {
 		return err
 	}
-
-	// ---
 
 	response := make(sessionsHandlerResponses, len(sessions))
 	for i, session := range sessions {
@@ -67,6 +57,7 @@ func (e *ActiveSessionsHandler) get(ctx *fiber.Ctx) error {
 				DeviceId: uuid.UUID(session.OwnedBy.DeviceId).String(),
 				UserId:   uuid.UUID(session.OwnedBy.UserId).String(),
 			},
+			Active:    activeSession.Id == session.Id,
 			ExpiresAt: session.ExpiresAt.UTC().Format(time.RFC3339),
 		}
 	}

@@ -20,10 +20,10 @@ type GrantPermissionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware       *UserMiddleware
-	PermissionMiddleware *UserPermissionMiddleware
+	RenewMiddleware          *sessionFiber.RenewMiddleware
+	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
+	UserMiddleware           *UserMiddleware
+	UserPermissionMiddleware *UserPermissionMiddleware
 	// ---
 	Grant cqrs.CommandHandler[command.GrantPermission]
 }
@@ -32,9 +32,9 @@ func UseGrantPermissionHandler(handler *GrantPermissionHandler) {
 	user := handler.Group("/user/:id")
 	grant := user.Group("/grant")
 	grant.Use(handler.RenewMiddleware.Handle)
-	grant.Use(handler.ProtectMiddleware.Handle)
+	grant.Use(handler.ProtectSessionMiddleware.Handle)
 	grant.Use(handler.UserMiddleware.Handle)
-	grant.Use(handler.PermissionMiddleware.Has("all:user:permission:grant"))
+	grant.Use(handler.UserPermissionMiddleware.Has("all:user:permission:grant"))
 	grant.Post("/:permission", handler.post)
 }
 

@@ -51,6 +51,8 @@ definitions:
     type: object
   fiber.sessionResponse:
     properties:
+      active:
+        type: boolean
       expires_at:
         type: string
       id:
@@ -97,6 +99,8 @@ paths:
           description: OK
         "400":
           description: Bad Request
+        "415":
+          description: Unsupported Media Type
         "500":
           description: Internal Server Error
       summary: Initiate a new session with local credentials
@@ -249,6 +253,8 @@ paths:
       responses:
         "204":
           description: No Content
+        "400":
+          description: Bad Request
         "401":
           description: Unauthorized
         "403":

@@ -17,23 +17,25 @@ type sessionOwner struct {
 type sessionResponse struct {
 	Id        string       `json:"id"`
 	OwnedBy   sessionOwner `json:"owned_by"`
+	Active    bool         `json:"active"`
 	ExpiresAt string       `json:"expires_at"`
 }
 
 type ActiveSessionHandler struct {
 	*fiber.App
 	// ---
-	RenewMiddleware   *RenewMiddleware
-	ProtectMiddleware *ProtectSessionMiddleware
+	RenewMiddleware          *RenewMiddleware
+	ProtectSessionMiddleware *ProtectSessionMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 }
 
 func UseActiveSessionHandler(handler *ActiveSessionHandler) {
 	session := handler.Group("/session")
-	session.Use(handler.RenewMiddleware.Handle)
-	session.Use(handler.ProtectMiddleware.Handle)
-	session.Get("/active", handler.get)
+	session.Get("/active",
+		handler.RenewMiddleware.Handle,
+		handler.ProtectSessionMiddleware.Handle,
+		handler.get)
 }
 
 // @Summary	Get details of the active session
@@ -44,21 +46,10 @@ func UseActiveSessionHandler(handler *ActiveSessionHandler) {
 // @Router		/session/active [get]
 // @Tags		Session
 func (e *ActiveSessionHandler) get(ctx *fiber.Ctx) error {
-	sessionIdCookie := ctx.Cookies("session_id")
-
-	sessionId, err := uuid.FromString(sessionIdCookie)
-	if err != nil {
-		return err
+	session, ok := ctx.Locals("session").(*domain.Session)
+	if !ok {
+		return fiber.ErrInternalServerError
 	}
-
-	session, err := e.FindById.Handle(ctx.Context(), query.FindById{
-		Id: domain.SessionId(sessionId),
-	})
-	if err != nil {
-		return err
-	}
-
-	// ---
 
 	return ctx.JSON(sessionResponse{
 		Id: uuid.UUID(session.Id).String(),
@@ -66,6 +57,7 @@ func (e *ActiveSessionHandler) get(ctx *fiber.Ctx) error {
 			DeviceId: uuid.UUID(session.OwnedBy.DeviceId).String(),
 			UserId:   uuid.UUID(session.OwnedBy.UserId).String(),
 		},
+		Active:    true,
 		ExpiresAt: session.ExpiresAt.UTC().Format(time.RFC3339),
 	})
 }

@@ -94,40 +94,40 @@ func New() *App {
 	}
 	userPermissionMiddleware := &fiber3.UserPermissionMiddleware{}
 	createUserHandler := &fiber3.CreateUserHandler{
-		App:                  fiberApp,
-		Logger:               logger,
-		Validate:             validate,
-		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectSessionMiddleware,
-		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: userPermissionMiddleware,
-		Repo:                 gormUserRepo,
-		Create:               createHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		Validate:                 validate,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		UserMiddleware:           userMiddleware,
+		UserPermissionMiddleware: userPermissionMiddleware,
+		Repo:                     gormUserRepo,
+		Create:                   createHandler,
 	}
 	deleteHandler := app.NewDeleteHandler(gormUserRepo)
 	deleteMeHandler := &fiber3.DeleteMeHandler{
-		App:               fiberApp,
-		Logger:            logger,
-		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectSessionMiddleware,
-		UserMiddleware:    userMiddleware,
-		Delete:            deleteHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		UserMiddleware:           userMiddleware,
+		Delete:                   deleteHandler,
 	}
 	deleteUserHandler := &fiber3.DeleteUserHandler{
-		App:                  fiberApp,
-		Logger:               logger,
-		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectSessionMiddleware,
-		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: userPermissionMiddleware,
-		Delete:               deleteHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		UserMiddleware:           userMiddleware,
+		UserPermissionMiddleware: userPermissionMiddleware,
+		Delete:                   deleteHandler,
 	}
 	meHandler := &fiber3.MeHandler{
-		App:               fiberApp,
-		Logger:            logger,
-		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectSessionMiddleware,
-		UserMiddleware:    userMiddleware,
+		App:                      fiberApp,
+		Logger:                   logger,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		UserMiddleware:           userMiddleware,
 	}
 	userByIdHandler := &fiber3.UserByIdHandler{
 		App:              fiberApp,
@@ -135,23 +135,23 @@ func New() *App {
 		FindByIdentifier: findByIdentifierHandler,
 	}
 	fiberGrantPermissionHandler := &fiber3.GrantPermissionHandler{
-		App:                  fiberApp,
-		Logger:               logger,
-		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectSessionMiddleware,
-		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: userPermissionMiddleware,
-		Grant:                grantPermissionHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		UserMiddleware:           userMiddleware,
+		UserPermissionMiddleware: userPermissionMiddleware,
+		Grant:                    grantPermissionHandler,
 	}
 	revokePermissionHandler := app.NewRevokePermissionHandler(validate, gormUserRepo)
 	fiberRevokePermissionHandler := &fiber3.RevokePermissionHandler{
-		App:                  fiberApp,
-		Logger:               logger,
-		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectSessionMiddleware,
-		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: userPermissionMiddleware,
-		Revoke:               revokePermissionHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		UserMiddleware:           userMiddleware,
+		UserPermissionMiddleware: userPermissionMiddleware,
+		Revoke:                   revokePermissionHandler,
 	}
 	verifyHasPermissionHandler := app.NewVerifyHasPermissionHandler(gormUserRepo)
 	hasPermissionHandler := &fiber3.HasPermissionHandler{
@@ -192,39 +192,39 @@ func New() *App {
 	}
 	revokeHandler := app3.NewRevokeHandler(validate, gormSessionRepo)
 	logoutHandler := &fiber2.LogoutHandler{
-		App:               fiberApp,
-		Logger:            logger,
-		ProtectMiddleware: protectSessionMiddleware,
-		FindById:          findByIdHandler,
-		Revoke:            revokeHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		FindById:                 findByIdHandler,
+		Revoke:                   revokeHandler,
 	}
 	revokeSessionHandler := &fiber2.RevokeSessionHandler{
-		App:               fiberApp,
-		Logger:            logger,
-		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectSessionMiddleware,
-		FindById:          findByIdHandler,
-		Revoke:            revokeHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		FindById:                 findByIdHandler,
+		Revoke:                   revokeHandler,
 	}
 	findByOwnerUserIdHandler := app3.NewFindByOwnerUserIdHandler(gormSessionRepo)
 	activeSessionsHandler := &fiber2.ActiveSessionsHandler{
-		App:               fiberApp,
-		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectSessionMiddleware,
-		FindById:          findByIdHandler,
-		FindByOwnerUserId: findByOwnerUserIdHandler,
+		App:                      fiberApp,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		FindById:                 findByIdHandler,
+		FindByOwnerUserId:        findByOwnerUserIdHandler,
 	}
 	activeSessionHandler := &fiber2.ActiveSessionHandler{
-		App:               fiberApp,
-		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectSessionMiddleware,
-		FindById:          findByIdHandler,
+		App:                      fiberApp,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		FindById:                 findByIdHandler,
 	}
 	sessionByIdHandler := &fiber2.SessionByIdHandler{
-		App:               fiberApp,
-		RenewMiddleware:   renewMiddleware,
-		ProtectMiddleware: protectSessionMiddleware,
-		FindById:          findByIdHandler,
+		App:                      fiberApp,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		FindById:                 findByIdHandler,
 	}
 	sessionOptions := &session.Options{
 		DeviceIdMiddleware:    deviceIdMiddleware,
@@ -246,23 +246,23 @@ func New() *App {
 		Create:                    appCreateHandler,
 	}
 	fiberCreateHandler := &fiber4.CreateHandler{
-		App:                  fiberApp,
-		Logger:               logger,
-		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectSessionMiddleware,
-		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: userPermissionMiddleware,
-		Create:               appCreateHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		UserMiddleware:           userMiddleware,
+		UserPermissionMiddleware: userPermissionMiddleware,
+		Create:                   appCreateHandler,
 	}
 	appDeleteHandler := app2.NewDeleteHandler(gormPermissionRepo)
 	fiberDeleteHandler := &fiber4.DeleteHandler{
-		App:                  fiberApp,
-		Logger:               logger,
-		RenewMiddleware:      renewMiddleware,
-		ProtectMiddleware:    protectSessionMiddleware,
-		UserMiddleware:       userMiddleware,
-		PermissionMiddleware: userPermissionMiddleware,
-		Delete:               appDeleteHandler,
+		App:                      fiberApp,
+		Logger:                   logger,
+		RenewMiddleware:          renewMiddleware,
+		ProtectSessionMiddleware: protectSessionMiddleware,
+		UserMiddleware:           userMiddleware,
+		UserPermissionMiddleware: userPermissionMiddleware,
+		Delete:                   appDeleteHandler,
 	}
 	findAllHandler := app2.NewFindAllHandler(gormPermissionRepo)
 	permissionsHandler := &fiber4.PermissionsHandler{

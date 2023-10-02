@@ -17,10 +17,10 @@ type DeleteHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware       *userFiber.UserMiddleware
-	PermissionMiddleware *userFiber.UserPermissionMiddleware
+	RenewMiddleware          *sessionFiber.RenewMiddleware
+	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
+	UserMiddleware           *userFiber.UserMiddleware
+	UserPermissionMiddleware *userFiber.UserPermissionMiddleware
 	// ---
 	Delete cqrs.CommandHandler[command.Delete]
 }
@@ -29,9 +29,9 @@ func UseDeleteHandler(handler *DeleteHandler) {
 	del := handler.Group("/permission")
 	del.Delete("/:name",
 		handler.RenewMiddleware.Handle,
-		handler.ProtectMiddleware.Handle,
+		handler.ProtectSessionMiddleware.Handle,
 		handler.UserMiddleware.Handle,
-		handler.PermissionMiddleware.Has("all:permission:del"),
+		handler.UserPermissionMiddleware.Has("all:permission:del"),
 		handler.delete)
 }
 

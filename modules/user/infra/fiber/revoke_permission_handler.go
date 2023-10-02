@@ -19,10 +19,10 @@ type RevokePermissionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware       *UserMiddleware
-	PermissionMiddleware *UserPermissionMiddleware
+	RenewMiddleware          *sessionFiber.RenewMiddleware
+	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
+	UserMiddleware           *UserMiddleware
+	UserPermissionMiddleware *UserPermissionMiddleware
 	// ---
 	Revoke cqrs.CommandHandler[command.RevokePermission]
 }
@@ -31,9 +31,9 @@ func UseRevokePermissionHandler(handler *RevokePermissionHandler) {
 	user := handler.Group("/user/:id")
 	revoke := user.Group("/revoke")
 	revoke.Use(handler.RenewMiddleware.Handle)
-	revoke.Use(handler.ProtectMiddleware.Handle)
+	revoke.Use(handler.ProtectSessionMiddleware.Handle)
 	revoke.Use(handler.UserMiddleware.Handle)
-	revoke.Use(handler.PermissionMiddleware.Has("all:user:permission:revoke"))
+	revoke.Use(handler.UserPermissionMiddleware.Has("all:user:permission:revoke"))
 	revoke.Delete("/:permission", handler.delete)
 }
 

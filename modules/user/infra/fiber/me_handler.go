@@ -13,16 +13,16 @@ type MeHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware   *sessionFiber.RenewMiddleware
-	ProtectMiddleware *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware    *UserMiddleware
+	RenewMiddleware          *sessionFiber.RenewMiddleware
+	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
+	UserMiddleware           *UserMiddleware
 }
 
 func UseMeHandler(handler *MeHandler) {
 	user := handler.Group("/user")
 	user.Get("/me",
 		handler.RenewMiddleware.Handle,
-		handler.ProtectMiddleware.Handle,
+		handler.ProtectSessionMiddleware.Handle,
 		handler.UserMiddleware.Handle,
 		handler.get)
 }

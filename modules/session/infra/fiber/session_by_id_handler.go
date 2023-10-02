@@ -13,8 +13,8 @@ import (
 type SessionByIdHandler struct {
 	*fiber.App
 	// ---
-	RenewMiddleware   *RenewMiddleware
-	ProtectMiddleware *ProtectSessionMiddleware
+	RenewMiddleware          *RenewMiddleware
+	ProtectSessionMiddleware *ProtectSessionMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 }
@@ -22,7 +22,7 @@ type SessionByIdHandler struct {
 func UseSessionByIdHandler(handler *SessionByIdHandler) {
 	session := handler.Group("/session")
 	session.Use(handler.RenewMiddleware.Handle)
-	session.Use(handler.ProtectMiddleware.Handle)
+	session.Use(handler.ProtectSessionMiddleware.Handle)
 	session.Get("/:id", handler.get)
 }
 
@@ -50,8 +50,6 @@ func (e *SessionByIdHandler) get(ctx *fiber.Ctx) error {
 		}
 		return err
 	}
-
-	// ---
 
 	return ctx.JSON(sessionResponse{
 		Id: uuid.UUID(session.Id).String(),

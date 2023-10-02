@@ -15,7 +15,7 @@ type LogoutHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	ProtectMiddleware *ProtectSessionMiddleware
+	ProtectSessionMiddleware *ProtectSessionMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 	Revoke   cqrs.CommandHandler[command.Revoke]
@@ -23,8 +23,9 @@ type LogoutHandler struct {
 
 func UseLogoutHandler(handler *LogoutHandler) {
 	logout := handler.Group("/logout")
-	logout.Use(handler.ProtectMiddleware.Handle)
-	logout.Delete("/", handler.delete)
+	logout.Delete("/",
+		handler.ProtectSessionMiddleware.Handle,
+		handler.delete)
 }
 
 // @Summary	Revoke the current session
@@ -35,13 +36,9 @@ func UseLogoutHandler(handler *LogoutHandler) {
 // @Router		/logout [delete]
 // @Tags		Session
 func (e *LogoutHandler) delete(ctx *fiber.Ctx) error {
-	sessionId := ctx.Locals("session_id").(domain.SessionId)
-
-	session, err := e.FindById.Handle(ctx.Context(), query.FindById{
-		Id: sessionId,
-	})
-	if err != nil {
-		return err
+	session, ok := ctx.Locals("session_id").(*domain.Session)
+	if !ok {
+		return fiber.ErrInternalServerError
 	}
 
 	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{

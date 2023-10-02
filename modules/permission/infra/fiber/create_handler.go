@@ -22,10 +22,10 @@ type CreateHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware       *userFiber.UserMiddleware
-	PermissionMiddleware *userFiber.UserPermissionMiddleware
+	RenewMiddleware          *sessionFiber.RenewMiddleware
+	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
+	UserMiddleware           *userFiber.UserMiddleware
+	UserPermissionMiddleware *userFiber.UserPermissionMiddleware
 	// ---
 	Create cqrs.CommandHandler[command.Create]
 }
@@ -34,9 +34,9 @@ func UseCreateHandler(handler *CreateHandler) {
 	create := handler.Group("/permission")
 	create.Post("/",
 		handler.RenewMiddleware.Handle,
-		handler.ProtectMiddleware.Handle,
+		handler.ProtectSessionMiddleware.Handle,
 		handler.UserMiddleware.Handle,
-		handler.PermissionMiddleware.Has("all:permission:create"),
+		handler.UserPermissionMiddleware.Has("all:permission:create"),
 		handler.post)
 }
 

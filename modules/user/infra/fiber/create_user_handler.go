@@ -23,10 +23,10 @@ type CreateUserHandler struct {
 	Logger   *logrus.Logger
 	Validate *validator.Validate
 	// ---
-	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware       *UserMiddleware
-	PermissionMiddleware *UserPermissionMiddleware
+	RenewMiddleware          *sessionFiber.RenewMiddleware
+	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
+	UserMiddleware           *UserMiddleware
+	UserPermissionMiddleware *UserPermissionMiddleware
 	// ---
 	Repo   *model.GormUserRepo
 	Create cqrs.CommandHandler[command.Create]
@@ -36,9 +36,9 @@ func UseCreateUserHandler(handler *CreateUserHandler) {
 	user := handler.Group("/user")
 	user.Post("/",
 		handler.RenewMiddleware.Handle,
-		handler.ProtectMiddleware.Handle,
+		handler.ProtectSessionMiddleware.Handle,
 		handler.UserMiddleware.Handle,
-		handler.PermissionMiddleware.Has("all:user:create"),
+		handler.UserPermissionMiddleware.Has("all:user:create"),
 		handler.post)
 }
 

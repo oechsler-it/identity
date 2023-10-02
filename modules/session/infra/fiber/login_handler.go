@@ -43,6 +43,7 @@ func UseLoginHandler(handler *LoginHandler) {
 // @Param		renewable	formData	bool	false	"Renewable"
 // @Success	200
 // @Failure	400
+// @Failure	415
 // @Failure	500
 // @Router		/login [post]
 // @Tags		Session

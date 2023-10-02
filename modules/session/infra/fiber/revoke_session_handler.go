@@ -17,8 +17,8 @@ type RevokeSessionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware   *RenewMiddleware
-	ProtectMiddleware *ProtectSessionMiddleware
+	RenewMiddleware          *RenewMiddleware
+	ProtectSessionMiddleware *ProtectSessionMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 	Revoke   cqrs.CommandHandler[command.Revoke]
@@ -26,15 +26,17 @@ type RevokeSessionHandler struct {
 
 func UseRevokeSessionHandler(handler *RevokeSessionHandler) {
 	session := handler.Group("/session")
-	session.Use(handler.RenewMiddleware.Handle)
-	session.Use(handler.ProtectMiddleware.Handle)
-	session.Delete("/revoke/:id", handler.delete)
+	session.Delete("/revoke/:id",
+		handler.RenewMiddleware.Handle,
+		handler.ProtectSessionMiddleware.Handle,
+		handler.delete)
 }
 
 // @Summary	Revoke a session
 // @Produce	text/plain
 // @Param		id	path	string	true	"Id of the session"
 // @Success	204
+// @Failure	400
 // @Failure	401
 // @Failure	403
 // @Failure	404
@@ -42,25 +44,16 @@ func UseRevokeSessionHandler(handler *RevokeSessionHandler) {
 // @Router		/session/revoke/{id} [delete]
 // @Tags		Session
 func (e *RevokeSessionHandler) delete(ctx *fiber.Ctx) error {
-	sessionIdCookie := ctx.Cookies("session_id")
-
-	sessionId, err := uuid.FromString(sessionIdCookie)
-	if err != nil {
-		return err
-	}
-
-	activeSession, err := e.FindById.Handle(ctx.Context(), query.FindById{
-		Id: domain.SessionId(sessionId),
-	})
-	if err != nil {
-		return err
+	activeSession, ok := ctx.Locals("session").(*domain.Session)
+	if !ok {
+		return fiber.ErrInternalServerError
 	}
 
 	sessionIdParam := ctx.Params("id")
 
-	sessionId, err = uuid.FromString(sessionIdParam)
+	sessionId, err := uuid.FromString(sessionIdParam)
 	if err != nil {
-		return err
+		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
 	revokeSession, err := e.FindById.Handle(ctx.Context(), query.FindById{
@@ -72,8 +65,6 @@ func (e *RevokeSessionHandler) delete(ctx *fiber.Ctx) error {
 		}
 		return err
 	}
-
-	// ---
 
 	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
 		Id:             revokeSession.Id,
