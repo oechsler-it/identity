@@ -3,7 +3,6 @@ package fiber
 import (
 	"context"
 	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/runtime"
 	"github.com/sirupsen/logrus"

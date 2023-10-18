@@ -21,9 +21,10 @@ type SessionByIdHandler struct {
 
 func UseSessionByIdHandler(handler *SessionByIdHandler) {
 	session := handler.Group("/session")
-	session.Use(handler.RenewMiddleware.Handle)
-	session.Use(handler.ProtectSessionMiddleware.Handle)
-	session.Get("/:id", handler.get)
+	session.Get("/:id",
+		handler.RenewMiddleware.Handle,
+		handler.ProtectSessionMiddleware.Handle,
+		handler.get)
 }
 
 // @Summary	Get details of a session
@@ -46,7 +47,7 @@ func (e *SessionByIdHandler) get(ctx *fiber.Ctx) error {
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
-			return ctx.SendStatus(fiber.StatusNotFound)
+			return ctx.Status(fiber.StatusNotFound).SendString(err.Error())
 		}
 		return err
 	}

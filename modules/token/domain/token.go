@@ -24,6 +24,13 @@ func (t *Token) MustNotBeExpired() error {
 	return nil
 }
 
+func (t *Token) MustBeOwnedBy(owner Owner) error {
+	if t.OwnedBy != owner {
+		return ErrTokenDoesNotBelongToOwner
+	}
+	return nil
+}
+
 func (t *Token) MustHavePermission(permission Permission) error {
 	if !t.HasPermission(permission) {
 		return ErrTokenDoesNotHavePermission
@@ -79,4 +86,19 @@ func IssueToken(
 	}
 
 	return token, nil
+}
+
+func (t *Token) Revoke(revokingEntity Owner) error {
+	if err := t.MustBeOwnedBy(revokingEntity); err != nil {
+		return err
+	}
+	if err := t.MustNotBeExpired(); err != nil {
+		return err
+	}
+
+	now := time.Now()
+	t.ExpiresAt = &now
+	t.UpdatedAt = time.Now()
+
+	return nil
 }

@@ -36,7 +36,7 @@ func UseLogoutHandler(handler *LogoutHandler) {
 // @Router		/logout [delete]
 // @Tags		Session
 func (e *LogoutHandler) delete(ctx *fiber.Ctx) error {
-	session, ok := ctx.Locals("session_id").(*domain.Session)
+	session, ok := ctx.Locals("session").(*domain.Session)
 	if !ok {
 		return fiber.ErrInternalServerError
 	}

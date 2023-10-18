@@ -4,11 +4,9 @@ import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
-	"github.com/oechsler-it/identity/modules/user/app/command"
-	"github.com/oechsler-it/identity/modules/user/domain"
-	uuid "github.com/satori/go.uuid"
+	"github.com/oechsler-it/identity/modules/token/app/command"
+	"github.com/oechsler-it/identity/modules/token/domain"
 	"github.com/sirupsen/logrus"
-	"net/url"
 )
 
 type HasPermissionHandler struct {
@@ -20,45 +18,44 @@ type HasPermissionHandler struct {
 }
 
 func UseHasPermissionHandler(handler *HasPermissionHandler) {
-	user := handler.Group("/user/:id")
-	has := user.Group("/has")
+	token := handler.Group("/token/:id")
+	has := token.Group("/has")
 	has.Get("/:permission", handler.get)
 }
 
-// @Summary	Verify if a user has a permission
+// @Summary	Verify if a token has a permission
 // @Accept		text/plain
 // @Produce	text/plain
-// @Param		id			path	string	true	"Id of the user"
+// @Param		id			path	string	true	"Id of the token"
 // @Param		permission	path	string	true	"Name of the permission"
 // @Success	204
 // @Failure	400
 // @Failure	403
 // @Failure	404
 // @Failure	500
-// @Router		/user/{id}/has/{permission} [get]
-// @Tags		User
+// @Router		/token/{id}/has/{permission} [get]
+// @Tags		Token
 func (e *HasPermissionHandler) get(ctx *fiber.Ctx) error {
 	idParam := ctx.Params("id")
 
-	id, err := uuid.FromString(idParam)
+	idPartial, err := domain.NewTokenIdPartialFromString(idParam)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
+		return ctx.Status(fiber.StatusBadRequest).SendString("invalid token id")
 	}
 
 	permission := ctx.Params("permission")
-	permissionUnescaped, err := url.PathUnescape(permission)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
-	}
 
 	if err := e.Has.Handle(ctx.Context(), command.VerifyHasPermission{
-		Id:         domain.UserId(id),
-		Permission: domain.Permission(permissionUnescaped),
+		Id:         idPartial,
+		Permission: domain.Permission(permission),
 	}); err != nil {
-		if errors.Is(err, domain.ErrUserNotFound) {
+		if errors.Is(err, domain.ErrTokenNotFound) {
 			return ctx.Status(fiber.StatusNotFound).SendString(err.Error())
 		}
-		if errors.Is(err, domain.ErrUserDoesNotHavePermission) {
+		if errors.Is(err, domain.ErrTokenIsExpired) {
+			return ctx.Status(fiber.StatusForbidden).SendString(err.Error())
+		}
+		if errors.Is(err, domain.ErrTokenDoesNotHavePermission) {
 			return ctx.Status(fiber.StatusForbidden).SendString(err.Error())
 		}
 		return err

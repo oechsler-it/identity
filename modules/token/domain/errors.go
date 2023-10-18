@@ -8,4 +8,6 @@ var (
 	ErrTokenIsExpired                 = errors.New("token is expired")
 	ErrTokenDoesNotHavePermission     = errors.New("token does not have permission")
 	ErrTokenCanNotBeGrantedPermission = errors.New("token can not be granted permission")
+	ErrTokenDoesNotBelongToOwner      = errors.New("token does not belong to owner")
+	ErrInvalidTokenIdPartial          = errors.New("invalid token id partial")
 )

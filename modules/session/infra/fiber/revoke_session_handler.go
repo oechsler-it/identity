@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/session/app/command"
-	"github.com/oechsler-it/identity/modules/session/app/query"
 	"github.com/oechsler-it/identity/modules/session/domain"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
@@ -20,8 +19,7 @@ type RevokeSessionHandler struct {
 	RenewMiddleware          *RenewMiddleware
 	ProtectSessionMiddleware *ProtectSessionMiddleware
 	// ---
-	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
-	Revoke   cqrs.CommandHandler[command.Revoke]
+	Revoke cqrs.CommandHandler[command.Revoke]
 }
 
 func UseRevokeSessionHandler(handler *RevokeSessionHandler) {
@@ -49,27 +47,23 @@ func (e *RevokeSessionHandler) delete(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	sessionIdParam := ctx.Params("id")
+	revokeSessionIdParam := ctx.Params("id")
 
-	sessionId, err := uuid.FromString(sessionIdParam)
+	revokeSessionId, err := uuid.FromString(revokeSessionIdParam)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	revokeSession, err := e.FindById.Handle(ctx.Context(), query.FindById{
-		Id: domain.SessionId(sessionId),
-	})
-	if err != nil {
+	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
+		Id:             domain.SessionId(revokeSessionId),
+		RevokingEntity: activeSession.OwnedBy,
+	}); err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
 			return ctx.Status(fiber.StatusNotFound).SendString(err.Error())
 		}
-		return err
-	}
-
-	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
-		Id:             revokeSession.Id,
-		RevokingEntity: activeSession.OwnedBy,
-	}); err != nil {
+		if errors.Is(err, domain.ErrSessionDoesNotBelongToOwner) {
+			return ctx.Status(fiber.StatusForbidden).SendString(err.Error())
+		}
 		if errors.Is(err, domain.ErrSessionIsExpired) {
 			return ctx.Status(fiber.StatusForbidden).SendString(err.Error())
 		}
@@ -77,7 +71,7 @@ func (e *RevokeSessionHandler) delete(ctx *fiber.Ctx) error {
 	}
 
 	e.Logger.WithFields(logrus.Fields{
-		"session_id": revokeSession.Id,
+		"session_id": revokeSessionId.String(),
 	}).Info("Session revoked")
 
 	return ctx.SendStatus(fiber.StatusNoContent)

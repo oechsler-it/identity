@@ -76,6 +76,16 @@ func (m *GormTokenRepo) FindByOwnerUserId(_ context.Context, userId domain.UserI
 	return tokens, nil
 }
 
+func (m *GormTokenRepo) FindByIdPartial(_ context.Context, idPartial domain.TokenIdPartial) (*domain.Token, error) {
+	var model GormTokenModel
+	if err := m.database.Where("id LIKE ?", idPartial.First+"%"+idPartial.Last).
+		Preload(clause.Associations).
+		First(&model).Error; err != nil {
+		return nil, domain.ErrTokenNotFound
+	}
+	return m.toToken(model)
+}
+
 func (m *GormTokenRepo) Create(ctx context.Context, token *domain.Token) error {
 	if _, err := m.FindById(ctx, token.Id); err == nil {
 		return domain.ErrTokenAlreadyExists
@@ -111,6 +121,22 @@ func (m *GormTokenRepo) Delete(ctx context.Context, id domain.TokenId, handler f
 	}
 
 	token.Id = id
+	model := m.toModel(token)
+	return m.database.Delete(&model).Error
+}
+
+func (m *GormTokenRepo) DeleteByIdPartial(ctx context.Context, idPartial domain.TokenIdPartial, handler func(token *domain.Token) error) error {
+	token, err := m.FindByIdPartial(ctx, idPartial)
+	if err != nil {
+		return err
+	}
+	tokenId := token.Id
+
+	if err := handler(token); err != nil {
+		return err
+	}
+
+	token.Id = tokenId
 	model := m.toModel(token)
 	return m.database.Delete(&model).Error
 }

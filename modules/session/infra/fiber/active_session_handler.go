@@ -15,10 +15,11 @@ type sessionOwner struct {
 }
 
 type sessionResponse struct {
-	Id        string       `json:"id"`
-	OwnedBy   sessionOwner `json:"owned_by"`
-	Active    bool         `json:"active"`
-	ExpiresAt string       `json:"expires_at"`
+	Id          string       `json:"id"`
+	OwnedBy     sessionOwner `json:"owned_by"`
+	Active      bool         `json:"active"`
+	InitiatedAt string       `json:"initiated_at"`
+	ExpiresAt   string       `json:"expires_at"`
 }
 
 type ActiveSessionHandler struct {
@@ -57,7 +58,8 @@ func (e *ActiveSessionHandler) get(ctx *fiber.Ctx) error {
 			DeviceId: uuid.UUID(session.OwnedBy.DeviceId).String(),
 			UserId:   uuid.UUID(session.OwnedBy.UserId).String(),
 		},
-		Active:    true,
-		ExpiresAt: session.ExpiresAt.UTC().Format(time.RFC3339),
+		Active:      true,
+		InitiatedAt: session.CreatedAt.UTC().Format(time.RFC3339),
+		ExpiresAt:   session.ExpiresAt.UTC().Format(time.RFC3339),
 	})
 }

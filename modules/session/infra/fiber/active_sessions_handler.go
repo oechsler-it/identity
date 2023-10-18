@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type sessionsHandlerResponses []sessionResponse
+type sessionListResponse []sessionResponse
 
 type ActiveSessionsHandler struct {
 	*fiber.App
@@ -17,7 +17,6 @@ type ActiveSessionsHandler struct {
 	RenewMiddleware          *RenewMiddleware
 	ProtectSessionMiddleware *ProtectSessionMiddleware
 	// ---
-	FindById          cqrs.QueryHandler[query.FindById, *domain.Session]
 	FindByOwnerUserId cqrs.QueryHandler[query.FindByOwnerUserId, []*domain.Session]
 }
 
@@ -31,7 +30,7 @@ func UseActiveSessionsHandler(handler *ActiveSessionsHandler) {
 
 // @Summary	List all active sessions belonging to the owner of the current session
 // @Produce	json
-// @Success	200	{object}	sessionsHandlerResponses
+// @Success	200	{object}	sessionListResponse
 // @Failure	401
 // @Failure	500
 // @Router		/session [get]
@@ -49,7 +48,7 @@ func (e *ActiveSessionsHandler) get(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	response := make(sessionsHandlerResponses, len(sessions))
+	response := make(sessionListResponse, len(sessions))
 	for i, session := range sessions {
 		response[i] = sessionResponse{
 			Id: uuid.UUID(session.Id).String(),
@@ -57,8 +56,9 @@ func (e *ActiveSessionsHandler) get(ctx *fiber.Ctx) error {
 				DeviceId: uuid.UUID(session.OwnedBy.DeviceId).String(),
 				UserId:   uuid.UUID(session.OwnedBy.UserId).String(),
 			},
-			Active:    activeSession.Id == session.Id,
-			ExpiresAt: session.ExpiresAt.UTC().Format(time.RFC3339),
+			Active:      activeSession.Id == session.Id,
+			InitiatedAt: session.CreatedAt.UTC().Format(time.RFC3339),
+			ExpiresAt:   session.ExpiresAt.UTC().Format(time.RFC3339),
 		}
 	}
 	return ctx.JSON(response)

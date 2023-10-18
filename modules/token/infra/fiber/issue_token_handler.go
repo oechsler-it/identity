@@ -127,9 +127,10 @@ func (e *IssueTokenHandler) post(ctx *fiber.Ctx) error {
 		expiresAtString = &expiresAtValue
 	}
 
-	e.Logger.WithField("token_id", string(id[:8])).
-		WithField("user_id", uuid.UUID(user.Id).String()).
-		Info("Token issued")
+	e.Logger.WithFields(logrus.Fields{
+		"token_id": id.GetPartial().String(),
+		"user_id":  uuid.UUID(user.Id).String(),
+	}).Info("Token issued")
 
 	return ctx.Status(fiber.StatusCreated).JSON(issueTokenResponse{
 		Token:     string(id),
