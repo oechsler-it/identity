@@ -2,13 +2,15 @@ package fiber
 
 import (
 	"errors"
-	userFiber "github.com/oechsler-it/identity/modules/user/infra/fiber"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
 	"github.com/oechsler-it/identity/modules/permission/app/command"
 	"github.com/oechsler-it/identity/modules/permission/domain"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
+	userFiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,10 +19,17 @@ type DeleteHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware          *sessionFiber.RenewMiddleware
-	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware           *userFiber.UserMiddleware
-	UserPermissionMiddleware *userFiber.UserPermissionMiddleware
+	TokenAuthMiddleware       *tokenFiberMiddleware.TokenAuthMiddleware
+	TokenPermissionMiddleware *tokenFiberMiddleware.TokenPermissionMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	UserMiddleware           *userFiberMiddleware.UserMiddleware
+	UserPermissionMiddleware *userFiberMiddleware.UserPermissionMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
+	AuthorizedMiddleware    *middlewareFiber.AuthorizedMiddleware
 	// ---
 	Delete cqrs.CommandHandler[command.Delete]
 }
@@ -28,23 +37,32 @@ type DeleteHandler struct {
 func UseDeleteHandler(handler *DeleteHandler) {
 	del := handler.Group("/permission")
 	del.Delete("/:name",
+		handler.TokenAuthMiddleware.Handle,
+		handler.TokenPermissionMiddleware.Has("all:permission:delete"),
+		// ---
 		handler.RenewMiddleware.Handle,
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
 		handler.UserMiddleware.Handle,
-		handler.UserPermissionMiddleware.Has("all:permission:del"),
+		handler.UserPermissionMiddleware.Has("all:permission:delete"),
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		handler.AuthorizedMiddleware.Handle,
+		// ---
 		handler.delete)
 }
 
-// @Summary	Delete a permission
-// @Accept		text/plain
-// @Produce	text/plain
-// @Param		name	path	string	true	"Name of the permission"
-// @Success	204
-// @Failure	401
-// @Failure	404
-// @Failure	500
-// @Router		/permission/{name} [delete]
-// @Tags		Permission
+//	@Summary	Delete a permission
+//	@Accept		text/plain
+//	@Produce	text/plain
+//	@Param		name	path	string	true	"Name of the permission"
+//	@Success	204
+//	@Failure	401
+//	@Failure	404
+//	@Failure	500
+//	@Router		/permission/{name} [delete]
+//	@Security	TokenAuth
+//	@Tags		Permission
 func (e *DeleteHandler) delete(ctx *fiber.Ctx) error {
 	name := ctx.Params("name")
 

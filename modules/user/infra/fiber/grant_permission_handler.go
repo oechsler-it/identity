@@ -6,13 +6,16 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/user/app/command"
 	"github.com/oechsler-it/identity/modules/user/domain"
+	userFiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 
 	permissionDomain "github.com/oechsler-it/identity/modules/permission/domain"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
 )
 
 type GrantPermissionHandler struct {
@@ -20,10 +23,17 @@ type GrantPermissionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware          *sessionFiber.RenewMiddleware
-	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware           *UserMiddleware
-	UserPermissionMiddleware *UserPermissionMiddleware
+	TokenAuthMiddleware       *tokenFiberMiddleware.TokenAuthMiddleware
+	TokenPermissionMiddleware *tokenFiberMiddleware.TokenPermissionMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	UserMiddleware           *userFiberMiddleware.UserMiddleware
+	UserPermissionMiddleware *userFiberMiddleware.UserPermissionMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
+	AuthorizedMiddleware    *middlewareFiber.AuthorizedMiddleware
 	// ---
 	Grant cqrs.CommandHandler[command.GrantPermission]
 }
@@ -31,11 +41,20 @@ type GrantPermissionHandler struct {
 func UseGrantPermissionHandler(handler *GrantPermissionHandler) {
 	user := handler.Group("/user/:id")
 	grant := user.Group("/grant")
-	grant.Use(handler.RenewMiddleware.Handle)
-	grant.Use(handler.ProtectSessionMiddleware.Handle)
-	grant.Use(handler.UserMiddleware.Handle)
-	grant.Use(handler.UserPermissionMiddleware.Has("all:user:permission:grant"))
-	grant.Post("/:permission", handler.post)
+	grant.Post("/:permission",
+		handler.TokenAuthMiddleware.Handle,
+		handler.TokenPermissionMiddleware.Has("all:user:permission:grant"),
+		// ---
+		handler.RenewMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
+		handler.UserMiddleware.Handle,
+		handler.UserPermissionMiddleware.Has("all:user:permission:grant"),
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		handler.AuthorizedMiddleware.Handle,
+		// ---
+		handler.post)
 }
 
 // @Summary	Grant a permission to a user
@@ -50,6 +69,7 @@ func UseGrantPermissionHandler(handler *GrantPermissionHandler) {
 // @Failure	404
 // @Failure	500
 // @Router		/user/{id}/grant/{permission} [post]
+// @Security	TokenAuth
 // @Tags		User
 func (e *GrantPermissionHandler) post(ctx *fiber.Ctx) error {
 	idParam := ctx.Params("id")

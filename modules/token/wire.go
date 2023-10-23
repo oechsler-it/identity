@@ -9,6 +9,7 @@ import (
 	"github.com/oechsler-it/identity/modules/token/app/query"
 	"github.com/oechsler-it/identity/modules/token/domain"
 	"github.com/oechsler-it/identity/modules/token/infra/fiber"
+	fiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/token/infra/model"
 )
 
@@ -18,7 +19,11 @@ type Options struct {
 	TokenByIdHandler     *fiber.TokenByIdHandler
 	HasPermissionHandler *fiber.HasPermissionHandler
 	RevokeTokenHandler   *fiber.RevokeTokenHandler
-	TokenIdMiddleware    *fiber.TokenIdMiddleware
+	TokenIdMiddleware    *fiberMiddleware.TokenMiddleware
+}
+
+func UseTokenMiddleware(opts *Options) {
+	fiberMiddleware.UseTokenMiddleware(opts.TokenIdMiddleware)
 }
 
 func UseToken(opts *Options) {
@@ -27,7 +32,6 @@ func UseToken(opts *Options) {
 	fiber.UseTokenByIdHandler(opts.TokenByIdHandler)
 	fiber.UseHasPermissionHandler(opts.HasPermissionHandler)
 	fiber.UseRevokeTokenHandler(opts.RevokeTokenHandler)
-	fiber.UseTokenIdMiddleware(opts.TokenIdMiddleware)
 }
 
 var WireToken = wire.NewSet(
@@ -59,7 +63,9 @@ var WireToken = wire.NewSet(
 	wire.Struct(new(fiber.TokenByIdHandler), "*"),
 	wire.Struct(new(fiber.RevokeTokenHandler), "*"),
 	wire.Struct(new(fiber.HasPermissionHandler), "*"),
-	wire.Struct(new(fiber.TokenIdMiddleware), "*"),
+	wire.Struct(new(fiberMiddleware.TokenMiddleware), "*"),
+	wire.Struct(new(fiberMiddleware.TokenAuthMiddleware), "*"),
+	wire.Struct(new(fiberMiddleware.TokenPermissionMiddleware), "*"),
 
 	model.NewGormTokenRepo,
 	wire.Bind(new(commandHandler.IssueWriteModel), new(*model.GormTokenRepo)),

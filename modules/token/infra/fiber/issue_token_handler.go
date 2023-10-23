@@ -3,20 +3,22 @@ package fiber
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/token/app/command"
 	"github.com/oechsler-it/identity/modules/token/domain"
 	"github.com/oechsler-it/identity/modules/token/infra/model"
 	userDomain "github.com/oechsler-it/identity/modules/user/domain"
-	userFiber "github.com/oechsler-it/identity/modules/user/infra/fiber"
+	userFiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/runtime"
 	"github.com/samber/lo"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 type issueTokenRequest struct {
@@ -38,10 +40,14 @@ type IssueTokenHandler struct {
 	Validate *validator.Validate
 	Env      *runtime.Env
 	// ---
-	RenewMiddleware      *sessionFiber.RenewMiddleware
-	ProtectMiddleware    *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware       *userFiber.UserMiddleware
-	PermissionMiddleware *userFiber.UserPermissionMiddleware
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	UserMiddleware           *userFiberMiddleware.UserMiddleware
+	UserPermissionMiddleware *userFiberMiddleware.UserPermissionMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
+	AuthorizedMiddleware    *middlewareFiber.AuthorizedMiddleware
 	// ---
 	Repo  *model.GormTokenRepo
 	Issue cqrs.CommandHandler[command.Issue]
@@ -51,9 +57,14 @@ func UseIssueTokenHandler(handler *IssueTokenHandler) {
 	token := handler.Group("/token")
 	token.Post("/",
 		handler.RenewMiddleware.Handle,
-		handler.ProtectMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
 		handler.UserMiddleware.Handle,
-		handler.PermissionMiddleware.Has("all:token:issue"),
+		handler.UserPermissionMiddleware.Has("all:token:issue"),
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		handler.AuthorizedMiddleware.Handle,
+		// ---
 		handler.post)
 }
 

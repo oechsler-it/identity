@@ -2,13 +2,17 @@ package fiber
 
 import (
 	"errors"
+	"net/url"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/user/app/command"
 	"github.com/oechsler-it/identity/modules/user/domain"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
-	"net/url"
 )
 
 type HasPermissionHandler struct {
@@ -16,13 +20,28 @@ type HasPermissionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
+	TokenAuthMiddleware *tokenFiberMiddleware.TokenAuthMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
+	// ---
 	Has cqrs.CommandHandler[command.VerifyHasPermission]
 }
 
 func UseHasPermissionHandler(handler *HasPermissionHandler) {
 	user := handler.Group("/user/:id")
 	has := user.Group("/has")
-	has.Get("/:permission", handler.get)
+	has.Get("/:permission",
+		handler.TokenAuthMiddleware.Handle,
+		// ---
+		handler.RenewMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		// ---
+		handler.get)
 }
 
 // @Summary	Verify if a user has a permission
@@ -36,6 +55,7 @@ func UseHasPermissionHandler(handler *HasPermissionHandler) {
 // @Failure	404
 // @Failure	500
 // @Router		/user/{id}/has/{permission} [get]
+// @Security	TokenAuth
 // @Tags		User
 func (e *HasPermissionHandler) get(ctx *fiber.Ctx) error {
 	idParam := ctx.Params("id")

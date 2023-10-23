@@ -3,9 +3,11 @@ package fiber
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
 	"github.com/oechsler-it/identity/modules/session/app/command"
 	"github.com/oechsler-it/identity/modules/session/app/query"
 	"github.com/oechsler-it/identity/modules/session/domain"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -15,7 +17,9 @@ type LogoutHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	ProtectSessionMiddleware *ProtectSessionMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 	Revoke   cqrs.CommandHandler[command.Revoke]
@@ -24,7 +28,10 @@ type LogoutHandler struct {
 func UseLogoutHandler(handler *LogoutHandler) {
 	logout := handler.Group("/logout")
 	logout.Delete("/",
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		// ---
 		handler.delete)
 }
 

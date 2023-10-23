@@ -6,10 +6,13 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
 	permissionDomain "github.com/oechsler-it/identity/modules/permission/domain"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/user/app/command"
 	"github.com/oechsler-it/identity/modules/user/domain"
+	userFiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -19,10 +22,17 @@ type RevokePermissionHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware          *sessionFiber.RenewMiddleware
-	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware           *UserMiddleware
-	UserPermissionMiddleware *UserPermissionMiddleware
+	TokenAuthMiddleware       *tokenFiberMiddleware.TokenAuthMiddleware
+	TokenPermissionMiddleware *tokenFiberMiddleware.TokenPermissionMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	UserMiddleware           *userFiberMiddleware.UserMiddleware
+	UserPermissionMiddleware *userFiberMiddleware.UserPermissionMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
+	AuthorizedMiddleware    *middlewareFiber.AuthorizedMiddleware
 	// ---
 	Revoke cqrs.CommandHandler[command.RevokePermission]
 }
@@ -30,11 +40,20 @@ type RevokePermissionHandler struct {
 func UseRevokePermissionHandler(handler *RevokePermissionHandler) {
 	user := handler.Group("/user/:id")
 	revoke := user.Group("/revoke")
-	revoke.Use(handler.RenewMiddleware.Handle)
-	revoke.Use(handler.ProtectSessionMiddleware.Handle)
-	revoke.Use(handler.UserMiddleware.Handle)
-	revoke.Use(handler.UserPermissionMiddleware.Has("all:user:permission:revoke"))
-	revoke.Delete("/:permission", handler.delete)
+	revoke.Delete("/:permission",
+		handler.TokenAuthMiddleware.Handle,
+		handler.TokenPermissionMiddleware.Has("all:user:permission:revoke"),
+		// ---
+		handler.RenewMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
+		handler.UserMiddleware.Handle,
+		handler.UserPermissionMiddleware.Has("all:user:permission:revoke"),
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		handler.AuthorizedMiddleware.Handle,
+		// ---
+		handler.delete)
 }
 
 // @Summary	Revoke a permission from a user
@@ -48,6 +67,7 @@ func UseRevokePermissionHandler(handler *RevokePermissionHandler) {
 // @Failure	404
 // @Failure	500
 // @Router		/user/{id}/revoke/{permission} [delete]
+// @Security	TokenAuth
 // @Tags		User
 func (e *RevokePermissionHandler) delete(ctx *fiber.Ctx) error {
 	idParam := ctx.Params("id")

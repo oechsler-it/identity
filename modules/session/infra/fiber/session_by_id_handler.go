@@ -2,19 +2,27 @@ package fiber
 
 import (
 	"errors"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
 	"github.com/oechsler-it/identity/modules/session/app/query"
 	"github.com/oechsler-it/identity/modules/session/domain"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
 	uuid "github.com/satori/go.uuid"
-	"time"
 )
 
 type SessionByIdHandler struct {
 	*fiber.App
 	// ---
-	RenewMiddleware          *RenewMiddleware
-	ProtectSessionMiddleware *ProtectSessionMiddleware
+	TokenAuthMiddleware *tokenFiberMiddleware.TokenAuthMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Session]
 }
@@ -22,20 +30,26 @@ type SessionByIdHandler struct {
 func UseSessionByIdHandler(handler *SessionByIdHandler) {
 	session := handler.Group("/session")
 	session.Get("/:id",
+		handler.TokenAuthMiddleware.Handle,
+		// ---
 		handler.RenewMiddleware.Handle,
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		// ---
 		handler.get)
 }
 
-// @Summary	Get details of a session
-// @Produce	json
-// @Param		id	path		string	true	"Session Id"
-// @Success	200	{object}	sessionResponse
-// @Failure	401
-// @Failure	404
-// @Failure	500
-// @Router		/session/{id} [get]
-// @Tags		Session
+//	@Summary	Get details of a session
+//	@Produce	json
+//	@Param		id	path		string	true	"Session Id"
+//	@Success	200	{object}	sessionResponse
+//	@Failure	401
+//	@Failure	404
+//	@Failure	500
+//	@Router		/session/{id} [get]
+//	@Security	TokenAuth
+//	@Tags		Session
 func (e *SessionByIdHandler) get(ctx *fiber.Ctx) error {
 	sessionId, err := uuid.FromString(ctx.Params("id"))
 	if err != nil {

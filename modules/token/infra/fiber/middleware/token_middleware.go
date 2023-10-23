@@ -1,24 +1,25 @@
-package fiber
+package middleware
 
 import (
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/token/app/query"
 	"github.com/oechsler-it/identity/modules/token/domain"
-	"strings"
 )
 
-type TokenIdMiddleware struct {
+type TokenMiddleware struct {
 	*fiber.App
 	// ---
 	FindById cqrs.QueryHandler[query.FindById, *domain.Token]
 }
 
-func UseTokenIdMiddleware(middleware *TokenIdMiddleware) {
+func UseTokenMiddleware(middleware *TokenMiddleware) {
 	middleware.Use(middleware.handle)
 }
 
-func (e *TokenIdMiddleware) handle(ctx *fiber.Ctx) error {
+func (e *TokenMiddleware) handle(ctx *fiber.Ctx) error {
 	authorizationHeader := ctx.Get("Authorization")
 	if authorizationHeader == "" {
 		return ctx.Next()

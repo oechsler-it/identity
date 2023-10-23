@@ -5,10 +5,12 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
 	"github.com/oechsler-it/identity/modules/permission/app/command"
 	"github.com/oechsler-it/identity/modules/permission/domain"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
-	userFiber "github.com/oechsler-it/identity/modules/user/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
+	userFiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,10 +24,17 @@ type CreateHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware          *sessionFiber.RenewMiddleware
-	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware           *userFiber.UserMiddleware
-	UserPermissionMiddleware *userFiber.UserPermissionMiddleware
+	TokenAuthMiddleware       *tokenFiberMiddleware.TokenAuthMiddleware
+	TokenPermissionMiddleware *tokenFiberMiddleware.TokenPermissionMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	UserMiddleware           *userFiberMiddleware.UserMiddleware
+	UserPermissionMiddleware *userFiberMiddleware.UserPermissionMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
+	AuthorizedMiddleware    *middlewareFiber.AuthorizedMiddleware
 	// ---
 	Create cqrs.CommandHandler[command.Create]
 }
@@ -33,23 +42,32 @@ type CreateHandler struct {
 func UseCreateHandler(handler *CreateHandler) {
 	create := handler.Group("/permission")
 	create.Post("/",
+		handler.TokenAuthMiddleware.Handle,
+		handler.TokenPermissionMiddleware.Has("all:permission:create"),
+		// ---
 		handler.RenewMiddleware.Handle,
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
 		handler.UserMiddleware.Handle,
 		handler.UserPermissionMiddleware.Has("all:permission:create"),
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		handler.AuthorizedMiddleware.Handle,
+		// ---
 		handler.post)
 }
 
-// @Summary	Create a new permission
-// @Accept		json
-// @Produce	text/plain
-// @Param		command	body	createPermissionRequest	true	"Create command"
-// @Success	201
-// @Failure	400
-// @Failure	401
-// @Failure	500
-// @Router		/permission [post]
-// @Tags		Permission
+//	@Summary	Create a new permission
+//	@Accept		json
+//	@Produce	text/plain
+//	@Param		command	body	createPermissionRequest	true	"Create command"
+//	@Success	201
+//	@Failure	400
+//	@Failure	401
+//	@Failure	500
+//	@Router		/permission [post]
+//	@Security	TokenAuth
+//	@Tags		Permission
 func (e *CreateHandler) post(ctx *fiber.Ctx) error {
 	if ctx.Get("Content-Type") != "application/json" {
 		return fiber.ErrUnsupportedMediaType

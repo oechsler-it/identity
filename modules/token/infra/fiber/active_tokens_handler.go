@@ -1,14 +1,16 @@
 package fiber
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
 	sessionDomain "github.com/oechsler-it/identity/modules/session/domain"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/token/app/query"
 	"github.com/oechsler-it/identity/modules/token/domain"
 	uuid "github.com/satori/go.uuid"
-	"time"
 )
 
 type tokenOwner struct {
@@ -28,8 +30,10 @@ type tokenListResponse []tokenResponse
 type ActiveTokensHandler struct {
 	*fiber.App
 	// ---
-	RenewMiddleware          *sessionFiber.RenewMiddleware
-	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
 	// ---
 	FindByOwnerUserId cqrs.QueryHandler[query.FindByOwnerUserId, []*domain.Token]
 }
@@ -38,7 +42,10 @@ func UseActiveTokensHandler(handler *ActiveTokensHandler) {
 	token := handler.Group("/token")
 	token.Get("/",
 		handler.RenewMiddleware.Handle,
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		// ---
 		handler.get)
 }
 

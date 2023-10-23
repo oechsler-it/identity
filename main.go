@@ -10,6 +10,11 @@ import "github.com/oechsler-it/identity/app"
 //	@description	A minimal identity provider
 
 //	@basePath	/
+
+// @securityDefinitions.apikey	TokenAuth
+// @in							header
+// @name						Authorization
+// @description				Bearer token authentication
 func main() {
 	app.New().Run()
 }

@@ -89,6 +89,11 @@ const docTemplate = `{
         },
         "/permission": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -109,6 +114,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -148,6 +158,11 @@ const docTemplate = `{
         },
         "/permission/{name}": {
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -238,13 +253,18 @@ const docTemplate = `{
         },
         "/session/revoke/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "text/plain"
                 ],
                 "tags": [
                     "Session"
                 ],
-                "summary": "Revoke a session",
+                "summary": "Revoke a session belonging to the owner of the current session",
                 "parameters": [
                     {
                         "type": "string",
@@ -278,6 +298,11 @@ const docTemplate = `{
         },
         "/session/{id}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -389,6 +414,11 @@ const docTemplate = `{
         },
         "/token/revoke/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "text/plain"
                 ],
@@ -429,6 +459,11 @@ const docTemplate = `{
         },
         "/token/{id}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -466,6 +501,11 @@ const docTemplate = `{
         },
         "/token/{id}/has/{permission}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -513,6 +553,11 @@ const docTemplate = `{
         },
         "/user": {
             "post": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -558,6 +603,11 @@ const docTemplate = `{
         },
         "/user/me": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -606,6 +656,11 @@ const docTemplate = `{
         },
         "/user/{id}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -641,6 +696,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "text/plain"
                 ],
@@ -678,6 +738,11 @@ const docTemplate = `{
         },
         "/user/{id}/grant/{permission}": {
             "post": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -728,6 +793,11 @@ const docTemplate = `{
         },
         "/user/{id}/has/{permission}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -775,6 +845,11 @@ const docTemplate = `{
         },
         "/user/{id}/revoke/{permission}": {
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -956,6 +1031,14 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "TokenAuth": {
+            "description": "Bearer token authentication",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

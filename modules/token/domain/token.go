@@ -1,8 +1,9 @@
 package domain
 
 import (
-	"github.com/samber/lo"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 type Token struct {
@@ -89,9 +90,12 @@ func IssueToken(
 }
 
 func (t *Token) Revoke(revokingEntity Owner) error {
-	if err := t.MustBeOwnedBy(revokingEntity); err != nil {
-		return err
+	ownerErr := t.MustBeOwnedBy(revokingEntity)
+	permissionErr := t.MustHavePermissionAkinTo("all:token:revoke")
+	if ownerErr != nil && permissionErr != nil {
+		return ErrTokenDoesNotBelongToOwner
 	}
+
 	if err := t.MustNotBeExpired(); err != nil {
 		return err
 	}

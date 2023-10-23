@@ -1,11 +1,12 @@
-package fiber
+package middleware
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/modules/session/domain"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 type DeviceIdMiddleware struct {

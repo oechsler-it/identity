@@ -2,12 +2,16 @@ package fiber
 
 import (
 	"fmt"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/user/app/command"
 	"github.com/oechsler-it/identity/modules/user/domain"
+	userFiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/user/infra/model"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
@@ -23,10 +27,17 @@ type CreateUserHandler struct {
 	Logger   *logrus.Logger
 	Validate *validator.Validate
 	// ---
-	RenewMiddleware          *sessionFiber.RenewMiddleware
-	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware           *UserMiddleware
-	UserPermissionMiddleware *UserPermissionMiddleware
+	TokenAuthMiddleware       *tokenFiberMiddleware.TokenAuthMiddleware
+	TokenPermissionMiddleware *tokenFiberMiddleware.TokenPermissionMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	UserMiddleware           *userFiberMiddleware.UserMiddleware
+	UserPermissionMiddleware *userFiberMiddleware.UserPermissionMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
+	AuthorizedMiddleware    *middlewareFiber.AuthorizedMiddleware
 	// ---
 	Repo   *model.GormUserRepo
 	Create cqrs.CommandHandler[command.Create]
@@ -35,10 +46,18 @@ type CreateUserHandler struct {
 func UseCreateUserHandler(handler *CreateUserHandler) {
 	user := handler.Group("/user")
 	user.Post("/",
+		handler.TokenAuthMiddleware.Handle,
+		handler.TokenPermissionMiddleware.Has("all:user:create"),
+		// ---
 		handler.RenewMiddleware.Handle,
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
 		handler.UserMiddleware.Handle,
 		handler.UserPermissionMiddleware.Has("all:user:create"),
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		handler.AuthorizedMiddleware.Handle,
+		// ---
 		handler.post)
 }
 
@@ -53,6 +72,7 @@ func UseCreateUserHandler(handler *CreateUserHandler) {
 // @Failure	422
 // @Failure	500
 // @Router		/user [post]
+// @Security	TokenAuth
 // @Tags		User
 func (e *CreateUserHandler) post(ctx *fiber.Ctx) error {
 	var body createUserRequest

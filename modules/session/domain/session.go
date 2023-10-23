@@ -84,8 +84,8 @@ func (s *Session) Renew(expiresAt time.Time) error {
 	return nil
 }
 
-func (s *Session) Revoke(revokingEntity Owner) error {
-	if err := s.MustBeOwnedBy(revokingEntity); err != nil {
+func (s *Session) Revoke(revokingEntity Owner, allowedByPermission bool) error {
+	if err := s.MustBeOwnedBy(revokingEntity); !allowedByPermission && err != nil {
 		return err
 	}
 	if err := s.MustNotBeExpired(); err != nil {

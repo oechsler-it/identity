@@ -9,6 +9,7 @@ import (
 	"github.com/oechsler-it/identity/modules/user/app/query"
 	"github.com/oechsler-it/identity/modules/user/domain"
 	"github.com/oechsler-it/identity/modules/user/infra/fiber"
+	fiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/user/infra/hook"
 	"github.com/oechsler-it/identity/modules/user/infra/model"
 	"github.com/oechsler-it/identity/modules/user/infra/service"
@@ -74,8 +75,8 @@ var WireUser = wire.NewSet(
 	wire.Struct(new(fiber.GrantPermissionHandler), "*"),
 	wire.Struct(new(fiber.RevokePermissionHandler), "*"),
 	wire.Struct(new(fiber.HasPermissionHandler), "*"),
-	wire.Struct(new(fiber.UserMiddleware), "*"),
-	wire.Struct(new(fiber.UserPermissionMiddleware), "*"),
+	wire.Struct(new(fiberMiddleware.UserMiddleware), "*"),
+	wire.Struct(new(fiberMiddleware.UserPermissionMiddleware), "*"),
 
 	model.NewGormUserRepo,
 	wire.Bind(new(commandHandler.CreateWriteModel), new(*model.GormUserRepo)),

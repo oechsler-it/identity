@@ -2,12 +2,17 @@ package fiber
 
 import (
 	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
 	sessionDomain "github.com/oechsler-it/identity/modules/session/domain"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/token/app/command"
 	"github.com/oechsler-it/identity/modules/token/domain"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
+	userDomain "github.com/oechsler-it/identity/modules/user/domain"
+	userFiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,8 +21,17 @@ type RevokeTokenHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware          *sessionFiber.RenewMiddleware
-	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
+	TokenAuthMiddleware       *tokenFiberMiddleware.TokenAuthMiddleware
+	TokenPermissionMiddleware *tokenFiberMiddleware.TokenPermissionMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	UserMiddleware           *userFiberMiddleware.UserMiddleware
+	UserPermissionMiddleware *userFiberMiddleware.UserPermissionMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
+	AuthorizedMiddleware    *middlewareFiber.AuthorizedMiddleware
 	// ---
 	Revoke cqrs.CommandHandler[command.Revoke]
 }
@@ -25,8 +39,18 @@ type RevokeTokenHandler struct {
 func UseRevokeTokenHandler(handler *RevokeTokenHandler) {
 	token := handler.Group("/token")
 	token.Delete("/revoke/:id",
+		handler.TokenAuthMiddleware.Handle,
+		handler.TokenPermissionMiddleware.Has("all:token:revoke"),
+		// ---
 		handler.RenewMiddleware.Handle,
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
+		handler.UserMiddleware.Handle,
+		handler.UserPermissionMiddleware.Has(userDomain.PermissionNone),
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		handler.AuthorizedMiddleware.Handle,
+		// ---
 		handler.delete)
 }
 
@@ -40,10 +64,12 @@ func UseRevokeTokenHandler(handler *RevokeTokenHandler) {
 // @Failure	404
 // @Failure	500
 // @Router		/token/revoke/{id} [delete]
+// @Security	TokenAuth
 // @Tags		Token
 func (e *RevokeTokenHandler) delete(ctx *fiber.Ctx) error {
-	activeSession, ok := ctx.Locals("session").(*sessionDomain.Session)
-	if !ok {
+	token, tokenOk := ctx.Locals("token").(*domain.Token)
+	activeSession, activeSessionOk := ctx.Locals("session").(*sessionDomain.Session)
+	if !tokenOk && !activeSessionOk {
 		return fiber.ErrInternalServerError
 	}
 
@@ -54,11 +80,18 @@ func (e *RevokeTokenHandler) delete(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).SendString("invalid token id")
 	}
 
-	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
-		IdPartial: idPartial,
-		RevokingEntity: domain.Owner{
+	revokingEntity := func() domain.Owner {
+		if token != nil {
+			return token.OwnedBy
+		}
+		return domain.Owner{
 			UserId: domain.UserId(activeSession.OwnedBy.UserId),
-		},
+		}
+	}()
+
+	if err := e.Revoke.Handle(ctx.Context(), command.Revoke{
+		IdPartial:      idPartial,
+		RevokingEntity: revokingEntity,
 	}); err != nil {
 		if errors.Is(err, domain.ErrTokenNotFound) {
 			return ctx.Status(fiber.StatusNotFound).SendString(err.Error())

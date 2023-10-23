@@ -1,4 +1,4 @@
-package fiber
+package middleware
 
 import (
 	"time"

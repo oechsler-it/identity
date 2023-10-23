@@ -151,6 +151,8 @@ paths:
             $ref: '#/definitions/fiber.permissionResponse'
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Get all permissions
       tags:
       - Permission
@@ -175,6 +177,8 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Create a new permission
       tags:
       - Permission
@@ -199,6 +203,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Delete a permission
       tags:
       - Permission
@@ -241,6 +247,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Get details of a session
       tags:
       - Session
@@ -283,7 +291,9 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-      summary: Revoke a session
+      security:
+      - TokenAuth: []
+      summary: Revoke a session belonging to the owner of the current session
       tags:
       - Session
   /token:
@@ -355,6 +365,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Get details of a token
       tags:
       - Token
@@ -386,6 +398,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Verify if a token has a permission
       tags:
       - Token
@@ -412,6 +426,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Revoke a token
       tags:
       - Token
@@ -441,6 +457,8 @@ paths:
           description: Unprocessable Entity
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Create a new user
       tags:
       - User
@@ -465,6 +483,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Delete a user
       tags:
       - User
@@ -488,6 +508,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Get information about a user
       tags:
       - User
@@ -521,6 +543,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Grant a permission to a user
       tags:
       - User
@@ -552,6 +576,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Verify if a user has a permission
       tags:
       - User
@@ -583,6 +609,8 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Revoke a permission from a user
       tags:
       - User
@@ -614,7 +642,15 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
+      security:
+      - TokenAuth: []
       summary: Get information about the current user
       tags:
       - User
+securityDefinitions:
+  TokenAuth:
+    description: Bearer token authentication
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

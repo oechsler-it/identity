@@ -2,8 +2,11 @@ package fiber
 
 import (
 	"github.com/gofiber/fiber/v2"
-	sessionFiber "github.com/oechsler-it/identity/modules/session/infra/fiber"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
+	tokenFiberMiddleware "github.com/oechsler-it/identity/modules/token/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/user/domain"
+	userFiberMiddleware "github.com/oechsler-it/identity/modules/user/infra/fiber/middleware"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -13,17 +16,28 @@ type MeHandler struct {
 	// ---
 	Logger *logrus.Logger
 	// ---
-	RenewMiddleware          *sessionFiber.RenewMiddleware
-	ProtectSessionMiddleware *sessionFiber.ProtectSessionMiddleware
-	UserMiddleware           *UserMiddleware
+	TokenAuthMiddleware *tokenFiberMiddleware.TokenAuthMiddleware
+	// ---
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	UserMiddleware *userFiberMiddleware.UserMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
 }
 
 func UseMeHandler(handler *MeHandler) {
 	user := handler.Group("/user")
 	user.Get("/me",
+		handler.TokenAuthMiddleware.Handle,
+		// ---
 		handler.RenewMiddleware.Handle,
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
 		handler.UserMiddleware.Handle,
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		// ---
 		handler.get)
 }
 
@@ -33,6 +47,7 @@ func UseMeHandler(handler *MeHandler) {
 // @Failure	401
 // @Failure	500
 // @Router		/user/me [get]
+// @Security	TokenAuth
 // @Tags		User
 func (e *MeHandler) get(ctx *fiber.Ctx) error {
 	user, ok := ctx.Locals("user").(*domain.User)

@@ -2,6 +2,7 @@ package hook
 
 import (
 	"context"
+
 	"github.com/oechsler-it/identity/cqrs"
 	"github.com/oechsler-it/identity/modules/permission/app/command"
 	"github.com/oechsler-it/identity/modules/permission/domain"
@@ -24,6 +25,8 @@ func UseCreateBasePermissions(hook *CreateBasePermissions) {
 	hook.OnStart(hook.allPermission)
 	hook.OnStart(hook.allPermissionCreate)
 	hook.OnStart(hook.allPermissionDelete)
+	hook.OnStart(hook.allToken)
+	hook.OnStart(hook.allTokenIssue)
 	hook.OnStart(hook.allUser)
 	hook.OnStart(hook.allUserCreate)
 	hook.OnStart(hook.allUserDelete)
@@ -66,6 +69,14 @@ func (e *CreateBasePermissions) allPermissionCreate(ctx context.Context) error {
 
 func (e *CreateBasePermissions) allPermissionDelete(ctx context.Context) error {
 	return e.ensureCreated(ctx, "all:permission:delete", "Delete permissions")
+}
+
+func (e *CreateBasePermissions) allToken(ctx context.Context) error {
+	return e.ensureCreated(ctx, "all:token", "Manage tokens")
+}
+
+func (e *CreateBasePermissions) allTokenIssue(ctx context.Context) error {
+	return e.ensureCreated(ctx, "all:token:issue", "Issue tokens")
 }
 
 func (e *CreateBasePermissions) allUser(ctx context.Context) error {

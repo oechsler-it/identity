@@ -1,4 +1,4 @@
-package fiber
+package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -7,30 +7,30 @@ import (
 	"github.com/oechsler-it/identity/modules/session/domain"
 )
 
-type ProtectSessionMiddleware struct {
+type SessionAuthMiddleware struct {
 	VerifyActive cqrs.CommandHandler[command.VerifyActive]
 }
 
-func (e *ProtectSessionMiddleware) Handle(ctx *fiber.Ctx) error {
+func (e *SessionAuthMiddleware) Handle(ctx *fiber.Ctx) error {
 	if _, ok := ctx.Locals("authenticated").(struct{}); ok {
 		return ctx.Next()
 	}
 
 	sessionId, ok := ctx.Locals("session_id").(domain.SessionId)
 	if !ok {
-		return fiber.ErrUnauthorized
+		return ctx.Next()
 	}
 
 	deviceId, ok := ctx.Locals("device_id").(domain.DeviceId)
 	if !ok {
-		return fiber.ErrUnauthorized
+		return ctx.Next()
 	}
 
 	if err := e.VerifyActive.Handle(ctx.Context(), command.VerifyActive{
 		Id:       sessionId,
 		DeviceId: deviceId,
 	}); err != nil {
-		return fiber.ErrUnauthorized
+		return ctx.Next()
 	}
 
 	ctx.Locals("authenticated", struct{}{})

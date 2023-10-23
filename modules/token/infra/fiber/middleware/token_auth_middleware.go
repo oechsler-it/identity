@@ -1,4 +1,4 @@
-package fiber
+package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -7,24 +7,24 @@ import (
 	"github.com/oechsler-it/identity/modules/token/domain"
 )
 
-type ProtectTokenMiddleware struct {
+type TokenAuthMiddleware struct {
 	VerifyActive cqrs.CommandHandler[command.VerifyActive]
 }
 
-func (e *ProtectTokenMiddleware) Handle(ctx *fiber.Ctx) error {
+func (e *TokenAuthMiddleware) Handle(ctx *fiber.Ctx) error {
 	if _, ok := ctx.Locals("authenticated").(struct{}); ok {
 		return ctx.Next()
 	}
 
 	tokenId, ok := ctx.Locals("token_id").(domain.TokenId)
 	if !ok {
-		return fiber.ErrUnauthorized
+		return ctx.Next()
 	}
 
 	if err := e.VerifyActive.Handle(ctx.Context(), command.VerifyActive{
 		Id: tokenId,
 	}); err != nil {
-		return fiber.ErrUnauthorized
+		return ctx.Next()
 	}
 
 	ctx.Locals("authenticated", struct{}{})

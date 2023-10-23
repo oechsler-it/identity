@@ -1,4 +1,4 @@
-package fiber
+package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -16,11 +16,17 @@ func (e *TokenPermissionMiddleware) Has(permission domain.Permission) fiber.Hand
 
 		token, ok := ctx.Locals("token").(*domain.Token)
 		if !ok {
-			return fiber.ErrForbidden
+			return ctx.Next()
+		}
+
+		if permission == domain.PermissionNone {
+			ctx.Locals("authorized", struct{}{})
+
+			return ctx.Next()
 		}
 
 		if !token.HasPermissionAkinTo(permission) {
-			return fiber.ErrForbidden
+			return ctx.Next()
 		}
 
 		ctx.Locals("authorized", struct{}{})

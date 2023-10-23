@@ -9,12 +9,14 @@ import (
 	"github.com/oechsler-it/identity/modules/session/app/query"
 	"github.com/oechsler-it/identity/modules/session/domain"
 	"github.com/oechsler-it/identity/modules/session/infra/fiber"
+	fiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
 	"github.com/oechsler-it/identity/modules/session/infra/model"
+	"github.com/oechsler-it/identity/modules/session/infra/service"
 )
 
 type Options struct {
-	DeviceIdMiddleware    *fiber.DeviceIdMiddleware
-	SessionIdMiddleware   *fiber.SessionMiddleware
+	DeviceIdMiddleware    *fiberMiddleware.DeviceIdMiddleware
+	SessionIdMiddleware   *fiberMiddleware.SessionMiddleware
 	LoginHandler          *fiber.LoginHandler
 	LogoutHandler         *fiber.LogoutHandler
 	RevokeSessionHandler  *fiber.RevokeSessionHandler
@@ -23,9 +25,12 @@ type Options struct {
 	SessionByIdHandler    *fiber.SessionByIdHandler
 }
 
+func UseSessionMiddleware(opts *Options) {
+	fiberMiddleware.UseDeviceIdMiddleware(opts.DeviceIdMiddleware)
+	fiberMiddleware.UseSessionMiddleware(opts.SessionIdMiddleware)
+}
+
 func UseSession(opts *Options) {
-	fiber.UseDeviceIdMiddleware(opts.DeviceIdMiddleware)
-	fiber.UseSessionMiddleware(opts.SessionIdMiddleware)
 	fiber.UseLoginHandler(opts.LoginHandler)
 	fiber.UseLogoutHandler(opts.LogoutHandler)
 	fiber.UseRevokeSessionHandler(opts.RevokeSessionHandler)
@@ -55,10 +60,13 @@ var WireSession = wire.NewSet(
 	queryHandler.NewFindByIdHandler,
 	wire.Bind(new(cqrs.QueryHandler[query.FindById, *domain.Session]), new(*queryHandler.FindByIdHandler)),
 
-	wire.Struct(new(fiber.DeviceIdMiddleware), "*"),
-	wire.Struct(new(fiber.SessionMiddleware), "*"),
-	wire.Struct(new(fiber.RenewMiddleware), "*"),
-	wire.Struct(new(fiber.ProtectSessionMiddleware), "*"),
+	service.NewUserDomainPermissionService,
+	wire.Bind(new(commandHandler.UserPermissionService), new(*service.UserDomainPermissionService)),
+
+	wire.Struct(new(fiberMiddleware.DeviceIdMiddleware), "*"),
+	wire.Struct(new(fiberMiddleware.SessionMiddleware), "*"),
+	wire.Struct(new(fiberMiddleware.RenewMiddleware), "*"),
+	wire.Struct(new(fiberMiddleware.SessionAuthMiddleware), "*"),
 	wire.Struct(new(fiber.LoginHandler), "*"),
 	wire.Struct(new(fiber.LogoutHandler), "*"),
 	wire.Struct(new(fiber.RevokeSessionHandler), "*"),

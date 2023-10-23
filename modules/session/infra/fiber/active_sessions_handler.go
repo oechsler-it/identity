@@ -1,12 +1,15 @@
 package fiber
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/oechsler-it/identity/cqrs"
+	middlewareFiber "github.com/oechsler-it/identity/modules/middleware/infra/fiber"
 	"github.com/oechsler-it/identity/modules/session/app/query"
 	"github.com/oechsler-it/identity/modules/session/domain"
+	sessionFiberMiddleware "github.com/oechsler-it/identity/modules/session/infra/fiber/middleware"
 	uuid "github.com/satori/go.uuid"
-	"time"
 )
 
 type sessionListResponse []sessionResponse
@@ -14,8 +17,10 @@ type sessionListResponse []sessionResponse
 type ActiveSessionsHandler struct {
 	*fiber.App
 	// ---
-	RenewMiddleware          *RenewMiddleware
-	ProtectSessionMiddleware *ProtectSessionMiddleware
+	RenewMiddleware       *sessionFiberMiddleware.RenewMiddleware
+	SessionAuthMiddleware *sessionFiberMiddleware.SessionAuthMiddleware
+	// ---
+	AuthenticatedMiddleware *middlewareFiber.AuthenticatedMiddleware
 	// ---
 	FindByOwnerUserId cqrs.QueryHandler[query.FindByOwnerUserId, []*domain.Session]
 }
@@ -24,7 +29,10 @@ func UseActiveSessionsHandler(handler *ActiveSessionsHandler) {
 	session := handler.Group("/session")
 	session.Get("/",
 		handler.RenewMiddleware.Handle,
-		handler.ProtectSessionMiddleware.Handle,
+		handler.SessionAuthMiddleware.Handle,
+		// ---
+		handler.AuthenticatedMiddleware.Handle,
+		// ---
 		handler.get)
 }
 

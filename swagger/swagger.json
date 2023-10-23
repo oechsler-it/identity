@@ -82,6 +82,11 @@
         },
         "/permission": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -102,6 +107,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -141,6 +151,11 @@
         },
         "/permission/{name}": {
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -231,13 +246,18 @@
         },
         "/session/revoke/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "text/plain"
                 ],
                 "tags": [
                     "Session"
                 ],
-                "summary": "Revoke a session",
+                "summary": "Revoke a session belonging to the owner of the current session",
                 "parameters": [
                     {
                         "type": "string",
@@ -271,6 +291,11 @@
         },
         "/session/{id}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -382,6 +407,11 @@
         },
         "/token/revoke/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "text/plain"
                 ],
@@ -422,6 +452,11 @@
         },
         "/token/{id}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -459,6 +494,11 @@
         },
         "/token/{id}/has/{permission}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -506,6 +546,11 @@
         },
         "/user": {
             "post": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -551,6 +596,11 @@
         },
         "/user/me": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -599,6 +649,11 @@
         },
         "/user/{id}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -634,6 +689,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "produces": [
                     "text/plain"
                 ],
@@ -671,6 +731,11 @@
         },
         "/user/{id}/grant/{permission}": {
             "post": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -721,6 +786,11 @@
         },
         "/user/{id}/has/{permission}": {
             "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -768,6 +838,11 @@
         },
         "/user/{id}/revoke/{permission}": {
             "delete": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/plain"
                 ],
@@ -949,6 +1024,14 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "TokenAuth": {
+            "description": "Bearer token authentication",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }
